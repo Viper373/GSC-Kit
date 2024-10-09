@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "gsc_scraper",
+  "version": "1.0",
+  "description": "Chrome 插件，用于提取 Google Search Console (GSC) 数据。",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs",
+    "notifications"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://search.google.com/u/2/search-console/performance/*",
+        "https://search.google.com/u/2/search-console/index/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  }
+}
