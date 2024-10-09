@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>GSC Scraper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            width: 400px; /* 增加宽度以容纳数据表格 */
+            padding: 20px;
+            background-color: #f0f0f0;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #extractBtn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #extractBtn:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+        }
+
+        #exportBtn {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        #exportBtn:hover {
+            background-color: #0b7dda;
+            transform: translateY(-2px);
+        }
+
+        #viewDataBtn {
+            background-color: #FF9800;
+            color: white;
+            display: none; /* 初始隐藏 */
+        }
+
+        #viewDataBtn:hover {
+            background-color: #e68900;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+<h1>GSC Scraper</h1>
+<button id="extractBtn">提取数据</button>
+<button id="exportBtn">导出为 Excel</button>
+<button id="viewDataBtn">查看数据</button> <!-- 新增按钮 -->
+
+<script src="popup.js"></script>
+</body>
+</html>
