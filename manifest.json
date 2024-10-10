@@ -13,21 +13,12 @@
     "scripting",
     "storage",
     "tabs",
-    "notifications"
+    "notifications",
+    "webNavigation"
   ],
   "background": {
     "service_worker": "background.js"
   },
-  "content_scripts": [
-    {
-      "matches": [
-        "https://search.google.com/u/2/search-console/performance/*",
-        "https://search.google.com/u/2/search-console/index/*"
-      ],
-      "js": ["content.js"],
-      "run_at": "document_idle"
-    }
-  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -35,5 +26,12 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://search.google.com/*/search-console/performance/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
 }

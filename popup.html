@@ -1,11 +1,12 @@
+<!-- popup.html -->
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <title>GSC Scraper</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 宋体, sans-serif;
             width: 400px; /* 增加宽度以容纳数据表格 */
             padding: 20px;
             background-color: #f0f0f0;
@@ -61,13 +62,23 @@
             background-color: #e68900;
             transform: translateY(-2px);
         }
+
+        /* 显示当前数据条数 */
+        #dataCount {
+            font-size: 16px;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #333;
+        }
     </style>
 </head>
 <body>
 <h1>GSC Scraper</h1>
-<button id="extractBtn">提取数据</button>
+<div id="dataCount">当前数据条数: 0</div> <!-- 显示当前数据条数 -->
+<button id="extractBtn">提取数据并添加至暂存区</button> <!-- 修改按钮文本 -->
 <button id="exportBtn">导出为 Excel</button>
-<button id="viewDataBtn">查看数据</button> <!-- 新增按钮 -->
+<button id="viewDataBtn">查看数据</button>
+<button id="clearDataBtn" style="display: none;">清空数据</button>
 
 <script src="popup.js"></script>
 </body>
