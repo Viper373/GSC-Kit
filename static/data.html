@@ -1,0 +1,26 @@
+<!-- data.html -->
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>GSC Scraper - 数据查看</title>
+    <link rel="stylesheet" href="data.css">
+</head>
+<body>
+<h1>GSC Scraper - 数据查看器</h1>
+<button id="exportDataBtn">导出为 Excel</button> <!-- 新增按钮 -->
+<button id="clearDataBtn" style="display: none;">清空数据</button>
+<div id="dataContainer">
+    <!-- 数据将在此处显示 -->
+    <p id="noData">正在加载数据...</p>
+    <div id="dataCount">当前数据条数: 0</div> <!-- 显示当前数据条数 -->
+</div>
+
+<!-- 新增回到顶部按钮 -->
+<div id="backToTopBtn">
+    <span>回到顶部</span>
+</div>
+
+<script src="data.js"></script>
+</body>
+</html>

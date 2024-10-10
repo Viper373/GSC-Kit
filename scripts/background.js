@@ -8,12 +8,11 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 });
 
-// 添加消息监听器来处理 'getData' 消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "getData") {
-        chrome.storage.local.get(["gscData", "allHeaders"], (result) => {
-            sendResponse({gscData: result.gscData || [], allHeaders: result.allHeaders || []});
+        chrome.storage.local.get(["gscData"], (result) => {
+            sendResponse({gscData: result.gscData || {}});
         });
-        return true; // 表示异步响应
+        return true; // 异步响应
     }
 });

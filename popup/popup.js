@@ -3,31 +3,31 @@
 // 更新数据条数
 function updateDataCount() {
     chrome.runtime.sendMessage({action: "getData"}, (response) => {
-        if (response && response.gscData) {
-            const dataCount = response.gscData.length;
-            const dataCountDisplay = document.getElementById('dataCount');
-            dataCountDisplay.textContent = `当前数据条数: ${dataCount}`;
+        const gscData = response.gscData || {};
+        let totalCount = 0;
 
-            const viewDataBtn = document.getElementById('viewDataBtn');
-            const clearDataBtn = document.getElementById('clearDataBtn'); // 新增
+        // 统计所有 URL 的数据条数
+        Object.keys(gscData).forEach((url) => {
+            const data = gscData[url].data || [];
+            totalCount += data.length;
+        });
 
-            if (dataCount > 0) {
-                viewDataBtn.style.display = 'block';
-                clearDataBtn.style.display = 'block'; // 显示清空数据按钮
-            } else {
-                viewDataBtn.style.display = 'none';
-                clearDataBtn.style.display = 'none'; // 隐藏清空数据按钮
-            }
+        const dataCountDisplay = document.getElementById('dataCount');
+        dataCountDisplay.textContent = `当前数据条数: ${totalCount}`; // 确保正确显示数据条数
+
+        const viewDataBtn = document.getElementById('viewDataBtn');
+        const clearDataBtn = document.getElementById('clearDataBtn');
+
+        if (totalCount > 0) {
+            viewDataBtn.style.display = 'block';
+            clearDataBtn.style.display = 'block';
         } else {
-            const dataCountDisplay = document.getElementById('dataCount');
-            dataCountDisplay.textContent = `当前数据条数: 0`;
-            const viewDataBtn = document.getElementById('viewDataBtn');
-            const clearDataBtn = document.getElementById('clearDataBtn'); // 新增
             viewDataBtn.style.display = 'none';
-            clearDataBtn.style.display = 'none'; // 隐藏清空数据按钮
+            clearDataBtn.style.display = 'none';
         }
     });
 }
+
 
 document.addEventListener('DOMContentLoaded', () => {
     const extractBtn = document.getElementById('extractBtn');
@@ -62,10 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 导出为 Excel 按钮点击事件
     exportBtn.addEventListener('click', () => {
-        // 从存储中获取数据并导出
         chrome.runtime.sendMessage({action: "getData"}, (response) => {
-            if (response && response.gscData && response.gscData.length > 0 && response.allHeaders && response.allHeaders.length > 0) {
-                exportToExcel(response.allHeaders, response.gscData);
+            const gscData = response.gscData || {};
+            if (Object.keys(gscData).length > 0) {
+                exportToExcel(gscData);
             } else {
                 showNotification("提示", "没有可导出的数据，请先提取数据。");
             }
@@ -123,34 +123,74 @@ function loadDataAndUpdateUI() {
     });
 }
 
+// sheet 名称生成函数
+function generateSheetName(url) {
+    const urlParams = new URLSearchParams(url.split('?')[1]); // 获取URL中的查询参数
+    const resourceId = urlParams.get('resource_id');
+    const page = urlParams.get('page');
+    const breakdown = urlParams.get('breakdown');
+
+    // 提取域名
+    let domain = resourceId.includes('%3A') ? resourceId.split('%3A')[1] : resourceId;
+
+    // 提取页面路径，并替换 `%2F` 为 `/`
+    let pagePath = page.replace(/%2F/g, '/');
+
+    // 提取page或query后所有的参数
+    let paramsAfterPageOrQuery = '';
+    for (const [key, value] of urlParams) {
+        if (key !== 'resource_id' && key !== 'page' && key !== 'breakdown') {
+            paramsAfterPageOrQuery += `-${key}-${value}`;
+        }
+    }
+
+    // 生成 sheet 名称
+    let sheetName = `${domain}-${pagePath}-${breakdown}${paramsAfterPageOrQuery}`;
+    // 替换非法字符：: \ / ? * [ ] 等
+    sheetName = sheetName.replace(/[:\\\/\?\*\[\]]/g, '');
+
+    // 处理可能的超长名称，sheet 名不能超过31个字符
+    return sheetName.length > 31 ? sheetName.slice(0, 31) : sheetName;
+}
+
 // 使用 xlsx.mjs 导出数据为 Excel 文件
-async function exportToExcel(allHeaders, data) {
+async function exportToExcel(gscData) {
     try {
         const xlsxModule = await import('../scripts/xlsx.mjs');
         const {utils, write} = xlsxModule;
-        // 构建一个二维数组，第一行是表头，后续行是数据
-        const worksheetData = [allHeaders];
-        data.forEach(row => {
-            const rowData = allHeaders.map(header => row[header] || "");
-            worksheetData.push(rowData);
-        });
-        const worksheet = utils.aoa_to_sheet(worksheetData);
         const workbook = utils.book_new();
-        utils.book_append_sheet(workbook, worksheet, "GSC Data");
+
+        // 针对每个 URL 创建一个 sheet
+        Object.keys(gscData).forEach((url) => {
+            const {headers, data} = gscData[url];
+            const worksheetData = [headers];
+            data.forEach(row => {
+                const rowData = headers.map(header => row[header] || "");
+                worksheetData.push(rowData);
+            });
+            const worksheet = utils.aoa_to_sheet(worksheetData);
+
+            // 使用 generateSheetName 函数生成 sheet 名称
+            const sheetName = generateSheetName(url);
+            utils.book_append_sheet(workbook, worksheet, sheetName);
+        });
+
+        // 导出 Excel 文件
         const excelBuffer = write(workbook, {bookType: 'xlsx', type: 'array'});
         const blob = new Blob([excelBuffer], {type: 'application/octet-stream'});
-        const url = URL.createObjectURL(blob);
+        const downloadUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
+        a.href = downloadUrl;
         a.download = 'gsc_data.xlsx';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(downloadUrl);
+
         showNotification("成功", "Excel 文件已下载");
 
         // 导出成功后清空所有数据
-        chrome.storage.local.remove(["gscData", "allHeaders"], () => {
+        chrome.storage.local.remove(["gscData"], () => {
             console.log("所有数据已清空。");
             const dataCountDisplay = document.getElementById('dataCount');
             dataCountDisplay.textContent = "当前数据条数: 0";
@@ -160,4 +200,3 @@ async function exportToExcel(allHeaders, data) {
         showNotification("错误", "导出Excel失败，请重试。");
     }
 }
-
