@@ -15,8 +15,7 @@
     "storage",
     "tabs",
     "notifications",
-    "webNavigation",
-    "web_accessible_resources"
+    "webNavigation"
   ],
   "background": {
     "service_worker": "scripts/background.js"
