@@ -12,7 +12,20 @@ h1 {
     text-align: center;
     color: #333;
 }
-
+#exportDataCount{
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #1ea900;
+    color: white;
+    border: none;
+    padding: 10px 15px; /* 减少垂直内边距 */
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, transform 0.2s;
+}
 /* 新增样式：导出按钮 */
 #exportDataBtn {
     position: absolute;
