@@ -15,7 +15,8 @@
     "storage",
     "tabs",
     "notifications",
-    "webNavigation"
+    "webNavigation",
+    "web_accessible_resources"
   ],
   "background": {
     "service_worker": "scripts/background.js"
@@ -34,6 +35,12 @@
       "matches": ["https://search.google.com/*/search-console/performance/*"],
       "js": ["scripts/content.js"],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["scripts/xlsx.mjs"],
+      "matches": ["<all_urls>"]
     }
   ]
 }
