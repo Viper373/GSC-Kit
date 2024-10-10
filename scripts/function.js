@@ -1,54 +1,89 @@
 // function.js
+
 // sheet 名称生成函数
-export function generateSheetName(url) {
-    const urlParams = new URLSearchParams(url.split('?')[1]); // 获取URL中的查询参数
-    const resourceId = urlParams.get('resource_id');
-    const page = urlParams.get('page');
-    const breakdown = urlParams.get('breakdown');
-
-    // 提取域名
-    let domain = resourceId.includes('%3A') ? resourceId.split('%3A')[1] : resourceId;
-
-    // 提取页面路径，并替换 `%2F` 为 `/`
-    let pagePath = page.replace(/%2F/g, '/');
-
-    // 提取page或query后所有的参数
-    let paramsAfterPageOrQuery = '';
-    for (const [key, value] of urlParams) {
-        if (key !== 'resource_id' && key !== 'page' && key !== 'breakdown') {
-            paramsAfterPageOrQuery += `-${key}-${value}`;
-        }
-    }
-
-    // 生成 sheet 名称
-    let sheetName = `${domain}-${pagePath}-${breakdown}${paramsAfterPageOrQuery}`;
-    // 替换非法字符：: \ / ? * [ ] 等
-    sheetName = sheetName.replace(/[:\\\/\?\*\[\]]/g, '');
-
-    // 处理可能的超长名称，sheet 名不能超过31个字符
-    return sheetName.length > 31 ? sheetName.slice(0, 31) : sheetName;
+export function generateSheetName(url, index) {
+    return `Pages${index}`; // 生成 Pages1, Pages2, 等名称
 }
 
 // 使用 xlsx.mjs 导出数据为 Excel 文件
 export async function exportToExcel(gscData) {
     try {
-        const xlsxModule = await import('./xlsx.mjs');
+        const xlsxModuleUrl = chrome.runtime.getURL('scripts/xlsx.mjs');
+        const xlsxModule = await import(xlsxModuleUrl);
         const {utils, write} = xlsxModule;
-        const workbook = utils.book_new();
 
-        // 针对每个 URL 创建一个 sheet
+        // 获取第一个 URL 以提取文件名所需的信息
+        const firstUrl = Object.keys(gscData)[0];
+        const decodedFirstUrl = decodeURIComponent(firstUrl);
+        const urlParams = new URLSearchParams(decodedFirstUrl.split('?')[1]);
+        const resourceId = urlParams.get('resource_id');
+        const domain = resourceId.includes('sc-domain:') ? resourceId.split(':')[1] : resourceId;
+
+        // 获取当前日期，格式为 YYYY-MM-DD
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const formattedDate = `${yyyy}-${mm}-${dd}`;
+
+        // 生成文件名
+        const fileName = `${domain}-Performance-${formattedDate}.xlsx`;
+
+        const workbook = utils.book_new();
+        let sheetIndex = 1;
+
         Object.keys(gscData).forEach((url) => {
             const {headers, data} = gscData[url];
-            const worksheetData = [headers];
+            const currentUrlParams = new URLSearchParams(url.split('?')[1]);
+            const page = currentUrlParams.get('page') || "/blog";
+            const breakdown = currentUrlParams.get('breakdown') || "Pages";
+            const num_of_days = currentUrlParams.get('num_of_days') || "";
+            const num_of_months = currentUrlParams.get('num_of_months') || "";
+            const start_date = currentUrlParams.get('start_date') || "";
+            const end_date = currentUrlParams.get('end_date') || "";
+
+            // Pages sheet
+            const pagesSheetName = `${(breakdown.charAt(0).toUpperCase() + breakdown.slice(1))}s${sheetIndex}`;
+            const pagesWorksheetData = [headers];
             data.forEach(row => {
                 const rowData = headers.map(header => row[header] || "");
-                worksheetData.push(rowData);
+                pagesWorksheetData.push(rowData);
             });
-            const worksheet = utils.aoa_to_sheet(worksheetData);
+            const pagesWorksheet = utils.aoa_to_sheet(pagesWorksheetData);
+            utils.book_append_sheet(workbook, pagesWorksheet, pagesSheetName);
 
-            // 使用 generateSheetName 函数生成 sheet 名称
-            const sheetName = generateSheetName(url);
-            utils.book_append_sheet(workbook, worksheet, sheetName);
+            // 动态生成 Date filter 值
+            let dateFilterValue = "";
+            if (num_of_days) {
+                if (parseInt(num_of_days) === 1) {
+                    dateFilterValue = "Most recent date";
+                } else {
+                    dateFilterValue = `Last ${num_of_days} days`;
+                }
+            } else if (num_of_months) {
+                dateFilterValue = `Last ${num_of_months} months`;
+            } else if (start_date && end_date) {
+                const startDateObj = new Date(start_date);
+                const endDateObj = new Date(end_date);
+                const options = {year: 'numeric', month: 'short', day: 'numeric'};
+                const startDateStr = startDateObj.toLocaleDateString('en-US', options);
+                const endDateStr = endDateObj.toLocaleDateString('en-US', options);
+                dateFilterValue = `${startDateStr}-${endDateStr}`;
+            } else {
+                dateFilterValue = "Date range not specified";
+            }
+
+            // Filters sheet
+            const filtersSheetName = `Filters${sheetIndex}`;
+            const filtersWorksheetData = [
+                ["Filter", "Value"],
+                ["Date", dateFilterValue],
+                ["Page", `+${decodeURIComponent(page)}`]
+            ];
+            const filtersWorksheet = utils.aoa_to_sheet(filtersWorksheetData);
+            utils.book_append_sheet(workbook, filtersWorksheet, filtersSheetName);
+
+            sheetIndex++;
         });
 
         // 导出 Excel 文件
@@ -57,7 +92,7 @@ export async function exportToExcel(gscData) {
         const downloadUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = downloadUrl;
-        a.download = 'gsc_data.xlsx';
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -68,8 +103,7 @@ export async function exportToExcel(gscData) {
         // 导出成功后清空所有数据
         chrome.storage.local.remove(["gscData"], () => {
             console.log("所有数据已清空。");
-            const dataCountDisplay = document.getElementById('dataCount');
-            dataCountDisplay.textContent = "当前数据条数: 0";
+            // 如果需要在 data.html 中更新 UI，可以在这里发送消息或进行其他处理
         });
     } catch (error) {
         console.error("导出Excel失败:", error);
@@ -81,7 +115,7 @@ export async function exportToExcel(gscData) {
 export function showNotification(title, message) {
     chrome.notifications.create({
         type: 'basic',
-        iconUrl: 'images/icon-48.png', // 使用48px图标
+        iconUrl: chrome.runtime.getURL('images/icon-48.png'), // 使用绝对路径
         title: title,
         message: message
     }, (notificationId) => {
@@ -91,3 +125,4 @@ export function showNotification(title, message) {
         }, 5000);
     });
 }
+

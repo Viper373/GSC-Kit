@@ -1,9 +1,10 @@
 // popup.js
 
 import { exportToExcel, showNotification } from '../scripts/function.js';
+
 // 更新数据条数
 function updateDataCount() {
-    chrome.runtime.sendMessage({action: "getData"}, (response) => {
+    chrome.runtime.sendMessage({ action: "getData" }, (response) => {
         const gscData = response.gscData || {};
         let totalCount = 0;
 
@@ -29,7 +30,6 @@ function updateDataCount() {
     });
 }
 
-
 document.addEventListener('DOMContentLoaded', () => {
     const extractBtn = document.getElementById('extractBtn');
     const exportBtn = document.getElementById('exportBtn');
@@ -42,15 +42,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // 提取数据按钮点击事件
     extractBtn.addEventListener('click', () => {
         // 向当前活动标签页的内容脚本发送提取数据的消息
-        chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             if (tabs[0]) {
-                chrome.tabs.sendMessage(tabs[0].id, {action: "extractData"}, (response) => {
+                chrome.tabs.sendMessage(tabs[0].id, { action: "extractData" }, (response) => {
                     if (chrome.runtime.lastError) {
                         showNotification("错误", "无法与内容脚本通信。请确保您在正确的页面上，并已重新加载页面。");
                         return;
                     }
                     if (response && response.status === "success") {
-                        // 处理成功响应
+                        updateDataCount(); // 更新数据条数
+                        showNotification("成功", "数据已成功提取。");
                     } else {
                         showNotification("失败", "数据提取失败。请确保在正确的页面上运行此扩展。");
                     }
@@ -63,9 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 导出为 Excel 按钮点击事件
     exportBtn.addEventListener('click', () => {
-        chrome.runtime.sendMessage({action: "getData"}, (response) => {
+        chrome.runtime.sendMessage({ action: "getData" }, (response) => {
             const gscData = response.gscData || {};
-            if (Object.keys(gscData).length > 0) { // 修改前: response.gscData.length > 0
+            if (Object.keys(gscData).length > 0) { // 确保使用 Object.keys(gscData).length
                 exportToExcel(gscData);
             } else {
                 showNotification("提示", "没有可导出的数据，请先提取数据。");
@@ -75,8 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 查看数据按钮点击事件
     viewDataBtn.addEventListener('click', () => {
-        const dataUrl = chrome.runtime.getURL('data.html');
-        chrome.tabs.create({url: dataUrl});
+        const dataUrl = chrome.runtime.getURL('static/data.html'); // 修正路径
+        chrome.tabs.create({ url: dataUrl });
     });
 
     // 清空数据按钮点击事件
@@ -98,9 +99,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // 加载数据并根据是否有数据显示“查看数据”按钮
 function loadDataAndUpdateUI() {
-    chrome.runtime.sendMessage({action: "getData"}, (response) => {
+    chrome.runtime.sendMessage({ action: "getData" }, (response) => {
         const viewDataBtn = document.getElementById('viewDataBtn');
-        if (response && response.gscData && Object.keys(response.gscData).length > 0) { // 修改前: response.gscData.length > 0
+        if (response && response.gscData && Object.keys(response.gscData).length > 0) { // 修正检查条件
             viewDataBtn.style.display = 'block'; // 显示按钮
         } else {
             viewDataBtn.style.display = 'none'; // 隐藏按钮
