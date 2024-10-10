@@ -1,10 +1,5 @@
 // function.js
 
-// sheet 名称生成函数
-export function generateSheetName(url, index) {
-    return `Pages${index}`; // 生成 Pages1, Pages2, 等名称
-}
-
 // 使用 xlsx.mjs 导出数据为 Excel 文件
 export async function exportToExcel(gscData) {
     try {
