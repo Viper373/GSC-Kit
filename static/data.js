@@ -1,6 +1,6 @@
 // data.js
 
-import { exportToExcel, showNotification } from '../scripts/function.js';
+import {exportToExcel, showNotification} from '../scripts/function.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     loadAndDisplayData();
@@ -22,7 +22,7 @@ function setupClearDataButton() {
 
 // 加载并显示数据
 function loadAndDisplayData() {
-    chrome.runtime.sendMessage({ action: "getData" }, (response) => {
+    chrome.runtime.sendMessage({action: "getData"}, (response) => {
         const dataContainer = document.getElementById('dataContainer');
         const dataCountDisplay = document.getElementById('dataCount');
         const exportDataCountDisplay = document.getElementById('exportDataCount');
@@ -32,12 +32,12 @@ function loadAndDisplayData() {
         dataContainer.innerHTML = ''; // 清空容器
 
         Object.keys(gscData).forEach((url, index) => {
-            const { headers, data } = gscData[url];
+            const {headers, data} = gscData[url];
             totalRowCount += data.length;
 
             if (data.length > 0 && headers.length > 0) {
                 // 创建URL标题
-                const urlTitle = document.createElement('h2');
+                const urlTitle = document.createElement('h3');
                 urlTitle.textContent = `数据源自：${decodeURIComponent(url)}`;
                 dataContainer.appendChild(urlTitle);
 
@@ -73,8 +73,17 @@ function loadAndDisplayData() {
         });
 
         // 显示总数据行数
-        dataCountDisplay.textContent = `当前数据条数: ${totalRowCount}`;
-        exportDataCountDisplay.textContent = `当前数据条数: ${totalRowCount}`;
+        if (dataCountDisplay) { // 检查元素是否存在
+            dataCountDisplay.textContent = `当前数据条数: ${totalRowCount}`;
+        } else {
+            console.error("Element with id `dataCount` not found.");
+        }
+
+        if (exportDataCountDisplay) { // 检查元素是否存在
+            exportDataCountDisplay.textContent = `导出数据条数: ${totalRowCount}`;
+        } else {
+            console.error("Element with id 'exportDataCount' not found.");
+        }
     });
 }
 
@@ -82,7 +91,7 @@ function loadAndDisplayData() {
 function setupExportButton() {
     const exportDataBtn = document.getElementById('exportDataBtn');
     exportDataBtn.addEventListener('click', () => {
-        chrome.runtime.sendMessage({ action: "getData" }, (response) => {
+        chrome.runtime.sendMessage({action: "getData"}, (response) => {
             const gscData = response.gscData || {};
             let urlsToExport = [];
 
@@ -108,7 +117,7 @@ function setupBackToTopButton() {
 
     // 点击按钮时回到顶部
     backToTopBtn.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({top: 0, behavior: 'smooth'});
     });
 
     // 控制回到顶部按钮的显示与隐藏
@@ -120,3 +129,10 @@ function setupBackToTopButton() {
         }
     });
 }
+
+// 添加 chrome.storage.onChanged 监听器以实时更新 UI
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.gscData) {
+        loadAndDisplayData();
+    }
+});
