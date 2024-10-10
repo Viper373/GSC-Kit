@@ -85,7 +85,7 @@ function setupExportButton() {
 // 使用 xlsx.mjs 导出数据为 Excel 文件
 async function exportToExcel(allHeaders, data) {
     try {
-        const xlsxModule = await import('./libs/xlsx.mjs');
+        const xlsxModule = await import('./scripts/xlsx.mjs');
         const {utils, write} = xlsxModule;
         // 构建一个二维数组，第一行是表头，后续行是数据
         const worksheetData = [allHeaders];
@@ -144,7 +144,7 @@ function scrollFunction() {
 function showNotification(title, message) {
     chrome.notifications.create({
         type: 'basic',
-        iconUrl: 'icons/icon48.png', // 使用48px图标
+        iconUrl: 'images/icon-48.png', // 使用48px图标
         title: title,
         message: message
     }, (notificationId) => {

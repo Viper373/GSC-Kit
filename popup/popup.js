@@ -45,12 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabs[0]) {
                 chrome.tabs.sendMessage(tabs[0].id, {action: "extractData"}, (response) => {
                     if (chrome.runtime.lastError) {
-                        console.error("发送消息时出错:", chrome.runtime.lastError.message);
+                        showNotification("错误", "无法与内容脚本通信。请确保您在正确的页面上，并已重新加载页面。");
                         return;
                     }
                     if (response && response.status === "success") {
-                        // 更新数据条数和按钮显示
-                        updateDataCount();
+                        // 处理成功响应
                     } else {
                         showNotification("失败", "数据提取失败。请确保在正确的页面上运行此扩展。");
                     }
@@ -100,7 +99,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 function showNotification(title, message) {
     chrome.notifications.create({
         type: 'basic',
-        iconUrl: 'icons/icon48.png', // 使用48px图标
+        iconUrl: 'images/icon-48.png', // 使用48px图标
         title: title,
         message: message
     }, (notificationId) => {
@@ -127,7 +126,7 @@ function loadDataAndUpdateUI() {
 // 使用 xlsx.mjs 导出数据为 Excel 文件
 async function exportToExcel(allHeaders, data) {
     try {
-        const xlsxModule = await import('./libs/xlsx.mjs');
+        const xlsxModule = await import('../scripts/xlsx.mjs');
         const {utils, write} = xlsxModule;
         // 构建一个二维数组，第一行是表头，后续行是数据
         const worksheetData = [allHeaders];
