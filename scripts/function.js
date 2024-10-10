@@ -1,16 +1,22 @@
 // function.js
 
 // 使用 xlsx.mjs 导出数据为 Excel 文件
-export async function exportToExcel(gscData) {
+export async function exportToExcel(gscData, urlsToExport = null) {
     try {
         const xlsxModuleUrl = chrome.runtime.getURL('scripts/xlsx.mjs');
         const xlsxModule = await import(xlsxModuleUrl);
-        const {utils, write} = xlsxModule;
+        const { utils, write } = xlsxModule;
+
+        // 如果传入 urlsToExport，导出指定的 URLs，否则导出全部
+        let urls = urlsToExport || Object.keys(gscData);
+
+        if (urls.length === 0) {
+            throw new Error("没有可导出的 URL");
+        }
 
         // 获取第一个 URL 以提取文件名所需的信息
-        const firstUrl = Object.keys(gscData)[0];
-        const decodedFirstUrl = decodeURIComponent(firstUrl);
-        const urlParams = new URLSearchParams(decodedFirstUrl.split('?')[1]);
+        const firstUrl = decodeURIComponent(urls[0]);
+        const urlParams = new URLSearchParams(firstUrl.split('?')[1]);
         const resourceId = urlParams.get('resource_id');
         const domain = resourceId.includes('sc-domain:') ? resourceId.split(':')[1] : resourceId;
 
@@ -27,18 +33,21 @@ export async function exportToExcel(gscData) {
         const workbook = utils.book_new();
         let sheetIndex = 1;
 
-        Object.keys(gscData).forEach((url) => {
-            const {headers, data} = gscData[url];
-            const currentUrlParams = new URLSearchParams(url.split('?')[1]);
+        urls.forEach((url) => {
+            if (!gscData[url]) return; // 跳过没有数据的 URL
+
+            const { headers, data } = gscData[url];
+            const decodedUrl = decodeURIComponent(url);
+            const currentUrlParams = new URLSearchParams(decodedUrl.split('?')[1]);
             const page = currentUrlParams.get('page') || "/blog";
-            const breakdown = currentUrlParams.get('breakdown') || "Pages";
-            const num_of_days = currentUrlParams.get('num_of_days') || "";
-            const num_of_months = currentUrlParams.get('num_of_months') || "";
-            const start_date = currentUrlParams.get('start_date') || "";
-            const end_date = currentUrlParams.get('end_date') || "";
+            const breakdown = currentUrlParams.get('breakdown') || "page";
+            const num_of_days = currentUrlParams.get('num_of_days');
+            const num_of_months = currentUrlParams.get('num_of_months');
+            const start_date = currentUrlParams.get('start_date');
+            const end_date = currentUrlParams.get('end_date');
 
             // Pages sheet
-            const pagesSheetName = `${(breakdown.charAt(0).toUpperCase() + breakdown.slice(1))}s${sheetIndex}`;
+            const pagesSheetName = `Pages${sheetIndex}`;
             const pagesWorksheetData = [headers];
             data.forEach(row => {
                 const rowData = headers.map(header => row[header] || "");
@@ -60,7 +69,7 @@ export async function exportToExcel(gscData) {
             } else if (start_date && end_date) {
                 const startDateObj = new Date(start_date);
                 const endDateObj = new Date(end_date);
-                const options = {year: 'numeric', month: 'short', day: 'numeric'};
+                const options = { year: 'numeric', month: 'short', day: 'numeric' };
                 const startDateStr = startDateObj.toLocaleDateString('en-US', options);
                 const endDateStr = endDateObj.toLocaleDateString('en-US', options);
                 dateFilterValue = `${startDateStr}-${endDateStr}`;
@@ -73,7 +82,7 @@ export async function exportToExcel(gscData) {
             const filtersWorksheetData = [
                 ["Filter", "Value"],
                 ["Date", dateFilterValue],
-                ["Page", `+${decodeURIComponent(page)}`]
+                ["Page", `+${page}`]
             ];
             const filtersWorksheet = utils.aoa_to_sheet(filtersWorksheetData);
             utils.book_append_sheet(workbook, filtersWorksheet, filtersSheetName);
@@ -82,8 +91,8 @@ export async function exportToExcel(gscData) {
         });
 
         // 导出 Excel 文件
-        const excelBuffer = write(workbook, {bookType: 'xlsx', type: 'array'});
-        const blob = new Blob([excelBuffer], {type: 'application/octet-stream'});
+        const excelBuffer = write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
         const downloadUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = downloadUrl;
@@ -100,9 +109,10 @@ export async function exportToExcel(gscData) {
             console.log("所有数据已清空。");
             // 如果需要在 data.html 中更新 UI，可以在这里发送消息或进行其他处理
         });
-    } catch (error) {
-        console.error("导出Excel失败:", error);
-        showNotification("错误", "导出Excel失败，请重试。");
+    }
+    catch (error) {
+        console.error(error);
+        showNotification("错误", "导出 Excel 文件时出错。请查看控制台以获取更多信息。");
     }
 }
 
@@ -120,4 +130,3 @@ export function showNotification(title, message) {
         }, 5000);
     });
 }
-

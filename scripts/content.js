@@ -27,9 +27,9 @@
         return {headers, data};
     }
 
-    // 获取当前页面的URL
+    // 获取当前页面的URL并解码
     function getCurrentURL() {
-        return window.location.href;
+        return decodeURIComponent(window.location.href);
     }
 
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -37,7 +37,7 @@
             const extracted = extractGSCData();
             const data = extracted.data;
             const headers = extracted.headers;
-            const url = getCurrentURL(); // 获取当前的URL
+            const url = getCurrentURL(); // 获取并解码当前的URL
 
             if (data.length > 0 && headers.length > 0) {
                 chrome.storage.local.get(["gscData"], (result) => {
@@ -56,7 +56,7 @@
                 console.error("未能提取到数据或表头");
                 sendResponse({status: "failure"});
             }
-            return true;
+            return true; // 异步响应
         }
     });
 })();
