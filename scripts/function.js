@@ -16,6 +16,8 @@ export async function exportToExcel(gscData, urlsToExport = null) {
 
         // 获取第一个 URL 以提取文件名所需的信息
         const firstUrl = decodeURIComponent(urls[0]);
+        const urlPath = new URL(firstUrl).pathname;
+        const gscType = urlPath.split('/').filter(part => part !== '')[3];
         const urlParams = new URLSearchParams(firstUrl.split('?')[1]);
         const resourceId = urlParams.get('resource_id');
         const domain = resourceId.includes('sc-domain:') ? resourceId.split(':')[1] : resourceId;
@@ -28,7 +30,7 @@ export async function exportToExcel(gscData, urlsToExport = null) {
         const formattedDate = `${yyyy}-${mm}-${dd}`;
 
         // 生成文件名
-        const fileName = `${domain}-Performance-${formattedDate}.xlsx`;
+        const fileName = `${gscType.charAt(0) + gscType.slice(1)}-${formattedDate}.xlsx`;
 
         const workbook = utils.book_new();
         let sheetIndex = 1;
@@ -39,15 +41,15 @@ export async function exportToExcel(gscData, urlsToExport = null) {
             const { headers, data } = gscData[url];
             const decodedUrl = decodeURIComponent(url);
             const currentUrlParams = new URLSearchParams(decodedUrl.split('?')[1]);
-            const page = currentUrlParams.get('page') || "/blog";
+            const page = currentUrlParams.get('page').replace("*", "") || "/blog";
             const breakdown = currentUrlParams.get('breakdown') || "page";
-            const num_of_days = currentUrlParams.get('num_of_days');
-            const num_of_months = currentUrlParams.get('num_of_months');
-            const start_date = currentUrlParams.get('start_date');
-            const end_date = currentUrlParams.get('end_date');
+            const num_of_days = currentUrlParams.get('num_of_days') || "";
+            const num_of_months = currentUrlParams.get('num_of_months') || "";
+            const start_date = currentUrlParams.get('start_date') || "";
+            const end_date = currentUrlParams.get('end_date') || "";
 
             // Pages sheet
-            const pagesSheetName = `Pages${sheetIndex}`;
+            const pagesSheetName = `${domain}丨${(breakdown.charAt(0).toUpperCase() + breakdown.slice(1))}s${sheetIndex}`;
             const pagesWorksheetData = [headers];
             data.forEach(row => {
                 const rowData = headers.map(header => row[header] || "");
@@ -67,11 +69,25 @@ export async function exportToExcel(gscData, urlsToExport = null) {
             } else if (num_of_months) {
                 dateFilterValue = `Last ${num_of_months} months`;
             } else if (start_date && end_date) {
-                const startDateObj = new Date(start_date);
-                const endDateObj = new Date(end_date);
+                // 转换 'YYYYMMDD' 为 'YYYY-MM-DD'
+                const formatDate = (dateStr) => {
+                    if (dateStr.length === 8) {
+                        return `${dateStr.slice(0,4)}-${dateStr.slice(4,6)}-${dateStr.slice(6,8)}`;
+                    }
+                    return dateStr; // 如果格式不对，直接返回原字符串
+                };
+                const formattedStartDate = formatDate(start_date);
+                const formattedEndDate = formatDate(end_date);
+
+                const startDateObj = new Date(formattedStartDate);
+                const endDateObj = new Date(formattedEndDate);
+
+                // 检查日期是否有效
+                const isValidDate = (d) => d instanceof Date && !isNaN(d);
+
                 const options = { year: 'numeric', month: 'short', day: 'numeric' };
-                const startDateStr = startDateObj.toLocaleDateString('en-US', options);
-                const endDateStr = endDateObj.toLocaleDateString('en-US', options);
+                const startDateStr = isValidDate(startDateObj) ? startDateObj.toLocaleDateString('en-US', options) : start_date;
+                const endDateStr = isValidDate(endDateObj) ? endDateObj.toLocaleDateString('en-US', options) : end_date;
                 dateFilterValue = `${startDateStr}-${endDateStr}`;
             } else {
                 dateFilterValue = "Date range not specified";
@@ -107,7 +123,6 @@ export async function exportToExcel(gscData, urlsToExport = null) {
         // 导出成功后清空所有数据
         chrome.storage.local.remove(["gscData"], () => {
             console.log("所有数据已清空。");
-            // 如果需要在 data.html 中更新 UI，可以在这里发送消息或进行其他处理
         });
     }
     catch (error) {

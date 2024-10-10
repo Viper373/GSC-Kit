@@ -1,10 +1,10 @@
 // popup.js
 
-import { exportToExcel, showNotification } from '../scripts/function.js';
+import {exportToExcel, showNotification} from '../scripts/function.js';
 
 // 更新数据条数
 function updateDataCount() {
-    chrome.runtime.sendMessage({ action: "getData" }, (response) => {
+    chrome.runtime.sendMessage({action: "getData"}, (response) => {
         const gscData = response.gscData || {};
         let totalCount = 0;
 
@@ -42,9 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 提取数据按钮点击事件
     extractBtn.addEventListener('click', () => {
         // 向当前活动标签页的内容脚本发送提取数据的消息
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
             if (tabs[0]) {
-                chrome.tabs.sendMessage(tabs[0].id, { action: "extractData" }, (response) => {
+                chrome.tabs.sendMessage(tabs[0].id, {action: "extractData"}, (response) => {
                     if (chrome.runtime.lastError) {
                         showNotification("错误", "无法与内容脚本通信。请确保您在正确的页面上，并已重新加载页面。");
                         return;
@@ -64,10 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 导出为 Excel 按钮点击事件
     exportBtn.addEventListener('click', () => {
-        chrome.runtime.sendMessage({ action: "getData" }, (response) => {
+        chrome.runtime.sendMessage({action: "getData"}, (response) => {
             const gscData = response.gscData || {};
             if (Object.keys(gscData).length > 0) { // 确保使用 Object.keys(gscData).length
-                exportToExcel(gscData);
+                exportToExcel(gscData); // 导出所有数据，不传递 url 参数
             } else {
                 showNotification("提示", "没有可导出的数据，请先提取数据。");
             }
@@ -76,8 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 查看数据按钮点击事件
     viewDataBtn.addEventListener('click', () => {
-        const dataUrl = chrome.runtime.getURL('static/data.html'); // 修正路径
-        chrome.tabs.create({ url: dataUrl });
+        const dataUrl = chrome.runtime.getURL('static/data.html');
+        chrome.tabs.create({url: dataUrl});
     });
 
     // 清空数据按钮点击事件
@@ -99,7 +99,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // 加载数据并根据是否有数据显示“查看数据”按钮
 function loadDataAndUpdateUI() {
-    chrome.runtime.sendMessage({ action: "getData" }, (response) => {
+    chrome.runtime.sendMessage({action: "getData"}, (response) => {
         const viewDataBtn = document.getElementById('viewDataBtn');
         if (response && response.gscData && Object.keys(response.gscData).length > 0) { // 修正检查条件
             viewDataBtn.style.display = 'block'; // 显示按钮
@@ -109,3 +109,10 @@ function loadDataAndUpdateUI() {
         updateDataCount(); // 确保更新数据条数
     });
 }
+
+// 添加 chrome.storage.onChanged 监听器以实时更新 UI
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.gscData) {
+        updateDataCount();
+    }
+});
