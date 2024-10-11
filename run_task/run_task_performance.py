@@ -92,4 +92,4 @@ class RunTaskPerformance:
         # 遍历每个域名
         for domain_str in domains:
             # self.download_and_save_excel(domain_str, at_id)
-            print(self.get.excel_content_to_json(domain_str, at_id))
+            self.get.excel_content_to_json(domain_str, at_id)
