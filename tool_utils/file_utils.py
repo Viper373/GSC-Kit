@@ -16,6 +16,13 @@ from tool_utils.decorator_utils import RichLogger
 rich_logger = RichLogger()
 
 
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, pd.Timestamp):
+            return obj.isoformat()
+        return super(CustomJSONEncoder, self).default(obj)
+
+
 class ExcelManager:
     def __init__(self, base_dir='excel'):
         """
