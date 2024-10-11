@@ -1,0 +1,150 @@
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background-color: #f0f0f0;
+    box-sizing: border-box;
+    position: relative; /* 使按钮定位基于body */
+}
+
+h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #333;
+}
+
+h3 {
+    margin-bottom: 15px;
+    color: #ef9413;
+}
+
+#exportDataCount{
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #1ea900;
+    color: white;
+    border: none;
+    padding: 10px 15px; /* 减少垂直内边距 */
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, transform 0.2s;
+}
+/* 新增样式：导出按钮 */
+#exportDataBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    padding: 10px 15px; /* 减少垂直内边距 */
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+#exportDataBtn:hover {
+    background-color: #0b7dda;
+    transform: translateY(-2px);
+}
+
+#clearDataBtn {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    background-color: #ffb218;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+#clearDataBtn:hover {
+    background-color: #da490b;
+    transform: translateY(-2px);
+}
+
+/* 新增样式：回到顶部按钮 */
+#backToTopBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 0;
+    width: 50px; /* 初始宽度 */
+    height: 50px;
+    background-color: #f06292; /* 背景颜色 */
+    border-radius: 25px 0 0 25px; /* 半圆角 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    color: white;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: width 0.3s ease, background-color 0.3s ease; /* 仅宽度和背景颜色有过渡 */
+    overflow: hidden;
+}
+
+#backToTopBtn::before {
+    content: "⬆"; /* 向上的箭头符号 */
+    font-size: 24px;
+}
+
+#backToTopBtn:hover {
+    width: 150px; /* 鼠标悬浮时扩展宽度 */
+    background-color: #e91e63; /* 鼠标悬浮时背景色 */
+}
+
+#backToTopBtn span {
+    display: none; /* 初始状态下隐藏文字 */
+    white-space: nowrap; /* 防止文字换行 */
+}
+
+#backToTopBtn:hover span {
+    display: inline-block; /* 鼠标悬浮时显示文字 */
+    padding-left: 15px;
+    opacity: 1; /* 显示文字 */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+    text-align: left;
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+tr:hover {
+    background-color: #f1f1f1;
+}
+
+#noData {
+    text-align: center;
+    color: #777;
+    margin-top: 50px;
+}
+
+/* 新增当前数据条数显示 */
+#dataCount {
+    font-size: 18px;
+    margin-bottom: 15px;
+    text-align: center;
+    color: #333;
+}
