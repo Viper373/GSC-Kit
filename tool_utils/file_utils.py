@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*-
 # @Project   :td_gsc_scraper
 # @FileName  :file_utils.py
-# @Time      :2024/10/11 16:00
-# @Author    :Zhangjinzhao
-# @Software  :PyCharm
-
-# -*- coding: utf-8 -*-
-# @Project   :td_gsc_scraper
-# @FileName  :file_utils.py
 # @Time      :2024/10/11 11:00
 # @Author    :Zhangjinzhao
 # @Software  :PyCharm
 
 import os
+import io
+import json
 import requests
+import pandas as pd
 from datetime import datetime
 from tool_utils.decorator_utils import RichLogger
 
@@ -75,3 +71,35 @@ class ExcelManager:
                 rich_logger.info(f"{file_path} 写入成功")
         else:
             rich_logger.error(f"{file_path} 写入失败：{response.status_code}")
+
+    @staticmethod
+    @rich_logger
+    def sheet_content_to_json(response: requests.Response, sheet_name: str = None) -> dict | list:
+        """
+        从 response.content 中读取 Excel 文件，并将其转换为 JSON。
+        :param response: 请求返回的 Response 对象。
+        :param sheet_name: 工作表名称。
+        :return: 包含所有工作表数据的 JSON 字符串。
+        """
+        if response.status_code != 200:
+            rich_logger.error(f"无法读取 Excel 文件: {response.status_code}")
+            return {}
+
+        # 使用 BytesIO 将响应内容转换为文件流
+        excel_file = io.BytesIO(response.content)
+
+        # 使用 pandas 读取 Excel 文件
+        if sheet_name:
+            df = pd.read_excel(excel_file, sheet_name=sheet_name)
+            json_data = df.to_dict(orient='records')
+            rich_logger.info(f"成功将工作表 '{sheet_name}' 转换为 JSON")
+            return json_data
+        else:
+            # 读取所有工作表
+            xls = pd.ExcelFile(excel_file)
+            json_data = {}
+            for sheet in xls.sheet_names:
+                df = pd.read_excel(xls, sheet_name=sheet)
+                json_data[sheet] = df.to_dict(orient='records')
+                rich_logger.info(f"成功将工作表 '{sheet}' 转换为 JSON")
+            return json_data
