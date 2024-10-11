@@ -98,60 +98,60 @@ class RunTaskIndexing:
             rich_logger.exception(f"{domain_str} 获取索引失败: {e}")
             return []
 
-    def download_and_save_excel(self, domain_str: str, index: str, at_id: str):
-        """
-        下载并保存Excel文件。
-        :param domain_str: 域名字符串
-        :param index: 索引
-        :param at_id: at_id
-        """
-        pages_excel_headers = {
-            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-            'accept-language': 'zh-CN,zh;q=0.9',
-            'cache-control': 'no-cache',
-            'pragma': 'no-cache',
-            'priority': 'u=0, i',
-            'referer': 'https://search.google.com/',
-            'sec-ch-ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
-            'sec-ch-ua-arch': '"x86"',
-            'sec-ch-ua-bitness': '"64"',
-            'sec-ch-ua-form-factors': '"Desktop"',
-            'sec-ch-ua-full-version': '"129.0.6668.100"',
-            'sec-ch-ua-full-version-list': '"Google Chrome";v="129.0.6668.100", "Not=A?Brand";v="8.0.0.0", "Chromium";v="129.0.6668.100"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-model': '""',
-            'sec-ch-ua-platform': '"Windows"',
-            'sec-ch-ua-platform-version': '"19.0.0"',
-            'sec-ch-ua-wow64': '?0',
-            'sec-fetch-dest': 'document',
-            'sec-fetch-mode': 'navigate',
-            'sec-fetch-site': 'same-origin',
-            'sec-fetch-user': '?1',
-            'upgrade-insecure-requests': '1',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.6668.100 Safari/537.36',
-            'x-browser-channel': 'stable',
-            'x-browser-copyright': 'Copyright 2024 Google LLC. All rights reserved.',
-            'x-browser-validation': 'g+9zsjnuPhmKvFM5e6eaEzcB1JY=',
-            'x-browser-year': '2024',
-            'x-client-data': 'CKe1yQEIkrbJAQiitskBCKmdygEIoYPLAQiWocsBCPKiywEIm/7MAQiFoM0BCKyezgEI/qXOAQi/ts4BCKK7zgEI2sLOAQjKxM4BCL7HzgEIp8jOAQivyM4BGPbJzQEYnLHOAQ==',
-        }
-
-        pages_excel_params = {
-            'resource_id': f'{domain_str}',
-            'item_key': f'{index}',
-            'request_type': '4',
-            'at': f'{at_id}'
-        }
-        try:
-            response = self.session.get(
-                url='https://search.google.com/u/1/search-console/export/index/drilldown',
-                headers=pages_excel_headers,
-                cookies=self.cookies,
-                params=pages_excel_params
-            )
-            excel.write_indexing_excel(response, domain_str, index)
-        except Exception:
-            return
+    # def download_and_save_excel(self, domain_str: str, index: str, at_id: str):
+    #     """
+    #     下载并保存Excel文件。
+    #     :param domain_str: 域名字符串
+    #     :param index: 索引
+    #     :param at_id: at_id
+    #     """
+    #     pages_excel_headers = {
+    #         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    #         'accept-language': 'zh-CN,zh;q=0.9',
+    #         'cache-control': 'no-cache',
+    #         'pragma': 'no-cache',
+    #         'priority': 'u=0, i',
+    #         'referer': 'https://search.google.com/',
+    #         'sec-ch-ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
+    #         'sec-ch-ua-arch': '"x86"',
+    #         'sec-ch-ua-bitness': '"64"',
+    #         'sec-ch-ua-form-factors': '"Desktop"',
+    #         'sec-ch-ua-full-version': '"129.0.6668.100"',
+    #         'sec-ch-ua-full-version-list': '"Google Chrome";v="129.0.6668.100", "Not=A?Brand";v="8.0.0.0", "Chromium";v="129.0.6668.100"',
+    #         'sec-ch-ua-mobile': '?0',
+    #         'sec-ch-ua-model': '""',
+    #         'sec-ch-ua-platform': '"Windows"',
+    #         'sec-ch-ua-platform-version': '"19.0.0"',
+    #         'sec-ch-ua-wow64': '?0',
+    #         'sec-fetch-dest': 'document',
+    #         'sec-fetch-mode': 'navigate',
+    #         'sec-fetch-site': 'same-origin',
+    #         'sec-fetch-user': '?1',
+    #         'upgrade-insecure-requests': '1',
+    #         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.6668.100 Safari/537.36',
+    #         'x-browser-channel': 'stable',
+    #         'x-browser-copyright': 'Copyright 2024 Google LLC. All rights reserved.',
+    #         'x-browser-validation': 'g+9zsjnuPhmKvFM5e6eaEzcB1JY=',
+    #         'x-browser-year': '2024',
+    #         'x-client-data': 'CKe1yQEIkrbJAQiitskBCKmdygEIoYPLAQiWocsBCPKiywEIm/7MAQiFoM0BCKyezgEI/qXOAQi/ts4BCKK7zgEI2sLOAQjKxM4BCL7HzgEIp8jOAQivyM4BGPbJzQEYnLHOAQ==',
+    #     }
+    #
+    #     pages_excel_params = {
+    #         'resource_id': f'{domain_str}',
+    #         'item_key': f'{index}',
+    #         'request_type': '4',
+    #         'at': f'{at_id}'
+    #     }
+    #     try:
+    #         response = self.session.get(
+    #             url='https://search.google.com/u/1/search-console/export/index/drilldown',
+    #             headers=pages_excel_headers,
+    #             cookies=self.cookies,
+    #             params=pages_excel_params
+    #         )
+    #         excel.write_indexing_excel(response, domain_str, index)
+    #     except Exception:
+    #         return
 
     @rich_logger
     def run_indexing(self):
@@ -182,5 +182,7 @@ class RunTaskIndexing:
                 continue
 
             # 遍历每个索引并下载Excel文件
-            for index in index_list:
-                self.download_and_save_excel(domain_str=domain_str, index=index, at_id=at_id)
+            # for index in index_list:
+                # self.download_and_save_excel(domain_str=domain_str, index=index, at_id=at_id)
+            for _ in index_list:
+                self.get.excel_content_to_json(domain_str, at_id)
