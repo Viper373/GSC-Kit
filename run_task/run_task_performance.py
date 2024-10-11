@@ -56,19 +56,19 @@ class RunTaskPerformance:
         }
         self.cookies = cookies
 
-    def download_and_save_excel(self, domain_str: str, at_id: str):
-        params = {
-            'resource_id': f"{domain_str}",
-            'num_of_days': '7',
-            'request_type': '4',
-            'at': f"{at_id}",
-        }
-        try:
-            response = self.session.get('https://search.google.com/u/1/search-console/export/san', headers=self.headers, cookies=self.cookies, params=params)
-            excel_name = string_utils.extract_excel_name(response, domain_str)
-            excel.write_performance_excel(response, domain_str, excel_name)
-        except Exception:
-            return
+    # def download_and_save_excel(self, domain_str: str, at_id: str):
+    #     params = {
+    #         'resource_id': f"{domain_str}",
+    #         'num_of_days': '7',
+    #         'request_type': '4',
+    #         'at': f"{at_id}",
+    #     }
+    #     try:
+    #         response = self.session.get('https://search.google.com/u/1/search-console/export/san', headers=self.headers, cookies=self.cookies, params=params)
+    #         excel_name = string_utils.extract_excel_name(response, domain_str)
+    #         excel.write_performance_excel(response, domain_str, excel_name)
+    #     except Exception:
+    #         return
 
     @rich_logger
     def run_performance(self):
@@ -79,7 +79,7 @@ class RunTaskPerformance:
         version, at_id = self.get.get_gsc_version_and_at_id()
 
         if not at_id:
-            rich_logger.exception("未能获取到at_id，终止程序。")
+            rich_logger.exception("未能获取到at_id，请更新cookies，终止程序。")
             return
 
         # 获取所有域名
@@ -91,4 +91,5 @@ class RunTaskPerformance:
 
         # 遍历每个域名
         for domain_str in domains:
-            self.download_and_save_excel(domain_str, at_id)
+            # self.download_and_save_excel(domain_str, at_id)
+            print(self.get.excel_content_to_json(domain_str, at_id))
