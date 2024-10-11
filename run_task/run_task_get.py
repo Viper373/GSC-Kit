@@ -4,18 +4,18 @@
 # @Time      :2024/10/11 16:46
 # @Author    :Zhangjinzhao
 # @Software  :PyCharm
+import json
 
 import requests
 import warnings
 from tool_utils.decorator_utils import RichLogger
 from tool_utils.string_utils import StringUtils
-from tool_utils.file_utils import ExcelManager
+from tool_utils.file_utils import ExcelManager, CustomJSONEncoder
 
 warnings.filterwarnings("ignore", category=UserWarning, module='openpyxl')
 rich_logger = RichLogger()
 string_utils = StringUtils()
 excel = ExcelManager()
-
 
 class RunTaskGet:
     def __init__(self, cookies):
@@ -178,6 +178,7 @@ class RunTaskGet:
             if response.status_code == 200:
                 excel_json = excel.sheet_content_to_json(response)
                 rich_logger.info(f"{domain_str} Excel文件转换为JSON成功")
+                excel_json = json.dumps(excel_json, ensure_ascii=False, cls=CustomJSONEncoder, default=str)
                 return excel_json
             else:
                 rich_logger.error(f"{domain_str} Excel文件转换为JSON失败: {response.text}")
