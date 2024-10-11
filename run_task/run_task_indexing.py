@@ -162,7 +162,7 @@ class RunTaskIndexing:
         version, at_id = self.get.get_gsc_version_and_at_id()
 
         if not at_id:
-            rich_logger.exception("未能获取到at_id，终止程序。")
+            rich_logger.exception("未能获取到at_id，请更新cookies，终止程序。")
             return
 
         # 获取所有域名
