@@ -4,8 +4,6 @@
 # Script Name: run_gsc_main.sh
 # Description: 检查是否有 GSC cookies，有则运行 gsc_main.py，确保单实例运行
 # =============================================================================
-# shellcheck disable=SC2034
-# shellcheck disable=SC2155
 
 # ------------------------------ 配置部分 -----------------------------------
 MAIN_SCRIPT="gsc_main.py"
@@ -91,6 +89,7 @@ run_gsc_main() {
     fi
 
     # 如果需要激活虚拟环境，可以在这里添加
+    source /etc/profile
     source /root/miniconda3/etc/profile.d/conda.sh
     conda activate $PROJECT_NAME
 
