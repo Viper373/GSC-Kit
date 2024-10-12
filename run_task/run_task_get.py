@@ -4,13 +4,12 @@
 # @Time      :2024/10/11 16:46
 # @Author    :Zhangjinzhao
 # @Software  :PyCharm
-import json
 
 import requests
 import warnings
 from tool_utils.decorator_utils import RichLogger
 from tool_utils.string_utils import StringUtils
-from tool_utils.file_utils import ExcelManager, CustomJSONEncoder
+from tool_utils.file_utils import ExcelManager
 
 warnings.filterwarnings("ignore", category=UserWarning, module='openpyxl')
 rich_logger = RichLogger()
@@ -158,32 +157,3 @@ class RunTaskGet:
         except Exception as e:
             rich_logger.exception(f"获取域名失败: {e}")
             return []
-
-    @rich_logger
-    def excel_content_to_json(self, domain_str: str, at_id: str):
-        """
-        将Excel文件的二进制数据转换为json格式。
-        :param domain_str: 域名字符串。
-        :param at_id: at_id字符串。
-        :return: json格式的Excel文件数据。
-        """
-        params = {
-            'resource_id': f"{domain_str}",
-            'num_of_days': '7',
-            'request_type': '4',
-            'at': f"{at_id}",
-        }
-        domain_str = domain_str.split(':')[-1]
-        try:
-            response = self.session.get('https://search.google.com/u/1/search-console/export/san', headers=self.headers, cookies=self.cookies, params=params)
-            if response.status_code == 200:
-                excel_json = excel.sheet_content_to_json(response)
-                rich_logger.info(f"{domain_str} Excel文件转换为JSON成功")
-                excel_json = json.dumps(excel_json, ensure_ascii=False, cls=CustomJSONEncoder, default=str)
-                return excel_json
-            else:
-                rich_logger.error(f"{domain_str} Excel文件转换为JSON失败: {response.text}")
-                return
-        except Exception as e:
-            rich_logger.exception(f"{domain_str} Excel文件转换为JSON失败: {e}")
-            return
