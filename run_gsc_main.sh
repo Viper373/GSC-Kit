@@ -74,6 +74,11 @@ log_warning() {
 
 # ------------------------------ 主函数 -------------------------------------
 run_gsc_main() {
+    # 创建日志文件
+    if [ ! -d "$LOG_FILE" ]; then
+        mkdir -p "$LOG_DIR"
+        touch "$LOG_FILE"
+    fi
 
     log_info "开始检查 GSC cookies..."
     log_info "脚本启动，日志将输出到 $LOG_FILE"
