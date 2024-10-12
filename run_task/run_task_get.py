@@ -17,6 +17,7 @@ rich_logger = RichLogger()
 string_utils = StringUtils()
 excel = ExcelManager()
 
+
 class RunTaskGet:
     def __init__(self, cookies):
         """
