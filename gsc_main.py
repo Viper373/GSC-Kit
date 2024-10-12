@@ -10,10 +10,10 @@ from run_task.run_task_performance import RunTaskPerformance
 from tool_utils.redis_utils import RedisUtils
 
 redis_utils = RedisUtils()
+cookies = redis_utils.get_gsc_cookies()
+run_task_indexing = RunTaskIndexing(cookies)
+run_task_performance = RunTaskPerformance(cookies)
 
 if __name__ == '__main__':
-    cookies = redis_utils.get_gsc_cookies()
-    run_task_indexing = RunTaskIndexing(cookies)
-    run_task_performance = RunTaskPerformance(cookies)
     run_task_performance.run_performance()
     run_task_indexing.run_indexing()
