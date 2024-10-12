@@ -125,6 +125,6 @@ class RunTaskPerformance:
             # self.download_and_save_excel(domain_str, at_id)
             performance_json = self.performance_content_to_json(domain_str, at_id)
             if performance_json:
-                api_utils.post_gsc_data(json_data=performance_json, json_type="performance")
+                api_utils.post_gsc_data(json_data=performance_json, json_type="performance", domain_str=domain_str)
             else:
                 continue
