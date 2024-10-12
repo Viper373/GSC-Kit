@@ -17,11 +17,8 @@ redis_utils = RedisUtils()
 if __name__ == '__main__':
     gsc_cookies_length = redis_utils.len_gsc_cookies()
     if gsc_cookies_length > 0:
-        rich_logger.info(f"Redis 中有 {gsc_cookies_length} 个 GSC Cookies，开始执行任务。")
         cookies = redis_utils.get_gsc_cookies()
         run_task_indexing = RunTaskIndexing(cookies)
         run_task_performance = RunTaskPerformance(cookies)
         # run_task_performance.run_performance()
         run_task_indexing.run_indexing()
-    else:
-        rich_logger.warning("Redis 中没有 GSC Cookies，任务结束。")
