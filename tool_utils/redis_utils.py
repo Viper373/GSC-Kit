@@ -6,6 +6,9 @@
 # @Software  :PyCharm
 
 import redis
+from tool_utils.log_utils import RichLogger
+
+rich_logger = RichLogger()
 
 
 class RedisConfig:
@@ -68,6 +71,7 @@ class RedisUtils:
         except Exception as e:
             return {e}
 
+    @rich_logger
     def len_gsc_cookies(self):
         """
         获取 Redis 列表中存储的 cookies 数量。
@@ -75,7 +79,12 @@ class RedisUtils:
         """
         try:
             count = self.redis_conn.llen(self.gsc_cookies_list_key)
-            return count
+            if count > 0:
+                rich_logger.info(f"Redis 中有 {count} 个 GSC Cookies，开始执行任务。")
+                return count
+            else:
+                rich_logger.warning("Redis 中没有 GSC Cookies，任务结束。")
+                return 0
         except redis.RedisError as e:
             return 0
 
