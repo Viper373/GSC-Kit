@@ -11,7 +11,7 @@ from typing import Any
 
 import requests
 from urllib.parse import urlparse
-from tool_utils.decorator_utils import RichLogger
+from tool_utils.log_utils import RichLogger
 
 rich_logger = RichLogger()
 

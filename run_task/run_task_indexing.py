@@ -8,13 +8,15 @@ import json
 
 import requests
 from run_task.run_task_get import RunTaskGet
-from tool_utils.decorator_utils import RichLogger
+from tool_utils.log_utils import RichLogger
 from tool_utils.string_utils import StringUtils
 from tool_utils.file_utils import ExcelManager, CustomJSONEncoder
+from tool_utils.api_utils import APIUtils
 
 rich_logger = RichLogger()
 string_utils = StringUtils()
 excel = ExcelManager()
+api_utils = APIUtils()
 
 
 class RunTaskIndexing:
@@ -248,6 +250,8 @@ class RunTaskIndexing:
             # 遍历每个索引并下载Excel文件
             for index in index_list:
                 # self.download_and_save_excel(domain_str=domain_str, index=index, at_id=at_id)
-                rich_logger.info(self.indexing_content_to_json(domain_str, at_id, index))
-                break
-            break
+                indexing_json = self.indexing_content_to_json(domain_str, at_id, index)
+                if indexing_json:
+                    api_utils.post_gsc_data(json_data=indexing_json, json_type='indexing')
+                else:
+                    continue

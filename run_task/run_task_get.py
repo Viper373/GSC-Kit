@@ -7,7 +7,7 @@
 
 import requests
 import warnings
-from tool_utils.decorator_utils import RichLogger
+from tool_utils.log_utils import RichLogger
 from tool_utils.string_utils import StringUtils
 from tool_utils.file_utils import ExcelManager
 

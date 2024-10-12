@@ -11,7 +11,7 @@ import json
 import requests
 import pandas as pd
 from datetime import datetime
-from tool_utils.decorator_utils import RichLogger
+from tool_utils.log_utils import RichLogger
 
 rich_logger = RichLogger()
 
@@ -34,7 +34,7 @@ class ExcelManager:
         self.today = datetime.today().strftime('%Y-%m-%d')
         self.project_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.excel_path = os.path.join(self.project_path, self.base_dir, self.today)
-        os.makedirs(self.excel_path, exist_ok=True)
+        # os.makedirs(self.excel_path, exist_ok=True)
 
     @rich_logger
     def write_indexing_excel(self, response: requests.Response, domain_str: str, index: str):
