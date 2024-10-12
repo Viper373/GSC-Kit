@@ -24,7 +24,9 @@ executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
 
 
 class JSONFormatter(logging.Formatter):
-    """自定义 JSON 格式化器，将日志记录转换为 JSON 格式。"""
+    """
+    自定义 JSON 格式化器，将日志记录转换为 JSON 格式。
+    """
 
     def format(self, record):
         log_record = {
@@ -123,7 +125,8 @@ class RichLogger:
             error_json_log_path = os.path.join(logs_dir, f"{script_name}_error_json.log")
 
             # 创建错误日志限流过滤器
-            error_rate_limit_filter = ErrorRateLimitFilter(interval=300)  # 限制 5 分钟内只记录一次错误日志
+            error_rate_limit_filter = ErrorRateLimitFilter(interval=300)  # error.log 的过滤器实例
+            error_json_rate_limit_filter = ErrorRateLimitFilter(interval=300)  # error_json.log 的过滤器实例
 
             # 文件处理器（INFO 及 WARNING 级别）
             info_handler = AsyncCompressingRotatingFileHandler(
@@ -164,7 +167,7 @@ class RichLogger:
                 encoding='utf-8'
             )
             error_json_handler.setLevel(logging.ERROR)
-            error_json_handler.addFilter(error_rate_limit_filter)
+            error_json_handler.addFilter(error_json_rate_limit_filter)
             json_formatter = JSONFormatter()
             error_json_handler.setFormatter(json_formatter)
 
@@ -187,7 +190,9 @@ class RichLogger:
             self.logger.addHandler(rich_handler)
 
     def log_method(self, func):
-        """装饰器，用于记录函数执行的日志和耗时"""
+        """
+        装饰器，用于记录函数执行的日志和耗时
+        """
 
         @wraps(func)
         def wrapper(*args, **kwargs):
