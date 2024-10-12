@@ -25,7 +25,7 @@ class RedisUtils:
     def __init__(self):
         redis_config = RedisConfig()
         self.redis_db_number = 13  # redis数据库编号
-        self.gsc_cookies_hash_key = 'td:gsc:scraper:cookies:hash'  # gsc_cookies哈希
+        self.gsc_cookies_list_key = 'td:gsc:bot:cookies:list'  # gsc_cookies哈希
         # 实现一个连接池
         redis_pool = redis.ConnectionPool(
             host=redis_config.redis_connect_host,
@@ -38,38 +38,46 @@ class RedisUtils:
 
     def set_gsc_cookies(self, cookies):
         """
-        将 cookies 字符串解析为键值对，并存入 Redis 的哈希中
+        将 cookies 字符串直接推送到 Redis 列表。
         :param cookies: cookies 字符串，例如 "key1=value1; key2=value2; ..."
         """
-        # 解析 cookies 字符串为字典
-        cookies_dict = {}
-        for cookie in cookies.split(';'):
-            cookie = cookie.strip()
-            if '=' in cookie:
-                key, value = cookie.split('=', 1)
-                cookies_dict[key.strip()] = value.strip()
-        if cookies_dict:
-            # 将解析后的键值对存入 Redis 哈希
-            self.redis_conn.hset(self.gsc_cookies_hash_key, mapping=cookies_dict)
+        if cookies:
+            self.redis_conn.lpush(self.gsc_cookies_list_key, cookies)
 
     def get_gsc_cookies(self):
         """
-        获取存储的所有 cookies，并从 Redis 中删除哈希，实现“取走”的效果
-        :return: 包含所有 cookies 的字典
+        从 Redis 列表中弹出最新的 cookies 字符串，并将其解析为字典。
+        :return: 包含所有 cookies 的字典，如果列表为空则返回空字典
         """
-        pipeline = self.redis_conn.pipeline()
-        pipeline.hgetall(self.gsc_cookies_hash_key)
-        pipeline.delete(self.gsc_cookies_hash_key)
-        result = pipeline.execute()
-        cookies_dict = result[0]  # hgetall 的结果
-        return cookies_dict
+        try:
+            # 弹出最右边的元素（最早推送的）
+            cookies_string = self.redis_conn.rpop(self.gsc_cookies_list_key)
+            if cookies_string:
+                # 将 cookies 字符串解析为字典
+                cookies_dict = {}
+                for cookie in cookies_string.split(';'):
+                    cookie = cookie.strip()
+                    if '=' in cookie:
+                        key, value = cookie.split('=', 1)
+                        cookies_dict[key.strip()] = value.strip()
+                return cookies_dict
+            else:
+                return {}
+        except redis.RedisError as e:
+            return {e}
+        except Exception as e:
+            return {e}
 
     def len_gsc_cookies(self):
         """
-        获取存储的 cookies 数量（键值对的数量）
+        获取 Redis 列表中存储的 cookies 数量。
         :return: 整数，表示存储的 cookies 的数量
         """
-        return self.redis_conn.hlen(self.gsc_cookies_hash_key)
+        try:
+            count = self.redis_conn.llen(self.gsc_cookies_list_key)
+            return count
+        except redis.RedisError as e:
+            return 0
 
 
 if __name__ == '__main__':
