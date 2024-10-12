@@ -95,22 +95,10 @@ run_gsc_main() {
     source /root/miniconda3/etc/profile.d/conda.sh
     conda activate td_gsc_bot
 
-    # 执行检查脚本，获取结果
-    CHECK_RESULT=$($PYTHON_CMD "$CHECK_SCRIPT")
-    log_info "检查 cookies 脚本 \"$CHECK_SCRIPT\" 执行完毕"
-    CHECK_RESULT=$(echo "$CHECK_RESULT" | tr -d '[:space:]')
-    log_info "检查 cookies 结果: $CHECK_RESULT"
+    # 运行主脚本
+    nohup $PYTHON_CMD -u "$MAIN_SCRIPT" >> /dev/null 2>&1 &
 
-    if [ "$CHECK_RESULT" = "True" ]; then
-        log_info "检测到 GSC cookies，启动 \"$MAIN_SCRIPT\""
-
-        # 运行主脚本
-        nohup $PYTHON_CMD -u "$MAIN_SCRIPT" >> /dev/null 2>&1 &
-
-        log_success "已启动 \"$MAIN_SCRIPT\""
-    else
-        log_info "没有 GSC 任务，任务结束"
-    fi
+    log_success "已启动 \"$MAIN_SCRIPT\""
 }
 
 # ------------------------------ 脚本执行入口 -------------------------------
