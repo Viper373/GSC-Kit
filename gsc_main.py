@@ -7,13 +7,21 @@
 
 from run_task.run_task_indexing import RunTaskIndexing
 from run_task.run_task_performance import RunTaskPerformance
+from tool_utils.log_utils import RichLogger
 from tool_utils.redis_utils import RedisUtils
 
+rich_logger = RichLogger()
 redis_utils = RedisUtils()
-cookies = redis_utils.get_gsc_cookies()
-run_task_indexing = RunTaskIndexing(cookies)
-run_task_performance = RunTaskPerformance(cookies)
+
 
 if __name__ == '__main__':
-    run_task_performance.run_performance()
-    run_task_indexing.run_indexing()
+    gsc_cookies_length = redis_utils.len_gsc_cookies()
+    if gsc_cookies_length > 0:
+        rich_logger.info(f"Redis 中有 {gsc_cookies_length} 个 GSC Cookies，开始执行任务。")
+        cookies = redis_utils.get_gsc_cookies()
+        run_task_indexing = RunTaskIndexing(cookies)
+        run_task_performance = RunTaskPerformance(cookies)
+        # run_task_performance.run_performance()
+        run_task_indexing.run_indexing()
+    else:
+        rich_logger.warning("Redis 中没有 GSC Cookies，任务结束。")
