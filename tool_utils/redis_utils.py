@@ -27,7 +27,7 @@ class RedisConfig:
 class RedisUtils:
     def __init__(self):
         redis_config = RedisConfig()
-        self.redis_db_number = 13  # redis数据库编号
+        self.redis_db_number = 1  # redis数据库编号
         self.gsc_cookies_list_key = 'td:gsc:bot:cookies:list'  # gsc_cookies哈希
         # 实现一个连接池
         redis_pool = redis.ConnectionPool(
