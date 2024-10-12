@@ -9,7 +9,6 @@
 
 # ------------------------------ 配置部分 -----------------------------------
 MAIN_SCRIPT="gsc_main.py"
-CHECK_SCRIPT="checks.py"
 PROJECT_DIR="/app/product/td_gsc_bot"
 PROJECT_NAME="td_gsc_bot"
 PYTHON_CMD="python"  # 根据实际环境调整，如使用 python3 或指定虚拟环境中的 python
