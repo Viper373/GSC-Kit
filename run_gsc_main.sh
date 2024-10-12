@@ -52,9 +52,9 @@ run_gsc_main() {
 
     # 切换到项目目录
     if cd "$PROJECT_DIR"; then
-        log_info "切换到目录 \"$PROJECT_DIR\" ${INFO_EMOJI}."
+        log_info "切换到目录 \"$PROJECT_DIR\""
     else
-        log_error "无法切换到目录 \"$PROJECT_DIR\" ${ERROR_EMOJI}."
+        log_error "无法切换到目录 \"$PROJECT_DIR\""
         exit 1
     fi
 
@@ -64,17 +64,17 @@ run_gsc_main() {
 
     # 执行检查脚本，获取结果
     CHECK_RESULT=$($PYTHON_CMD "$CHECK_SCRIPT")
-    log_info "检查cookies脚本 \"$CHECK_SCRIPT\" 执行完毕 ${END_EMOJI}."
+    log_info "检查cookies脚本 \"$CHECK_SCRIPT\" 执行完毕"
     CHECK_RESULT=$(echo "$CHECK_RESULT" | tr -d '[:space:]')
     log_info "检查cookies结果: $CHECK_RESULT"
 
     if [ "$CHECK_RESULT" = "True" ]; then
-        log_info "检测到 GSC cookies，启动 \"$MAIN_SCRIPT\" ${START_EMOJI}..."
+        log_info "检测到 GSC cookies，启动 \"$MAIN_SCRIPT\""
 
         # 运行主脚本
         nohup $PYTHON_CMD -u "$MAIN_SCRIPT" >> /dev/null 2>&1 &
 
-        log_success "已启动 \"$MAIN_SCRIPT\" ${SUCCESS_EMOJI}."
+        log_success "已启动 \"$MAIN_SCRIPT\""
     else
         log_info "没有 GSC 任务，任务结束"
     fi
