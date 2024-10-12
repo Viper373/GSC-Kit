@@ -7,10 +7,8 @@
 
 from run_task.run_task_indexing import RunTaskIndexing
 from run_task.run_task_performance import RunTaskPerformance
-from tool_utils.log_utils import RichLogger
 from tool_utils.redis_utils import RedisUtils
 
-rich_logger = RichLogger()
 redis_utils = RedisUtils()
 
 
