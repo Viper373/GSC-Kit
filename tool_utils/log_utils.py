@@ -10,9 +10,17 @@ import sys
 import json
 import time
 import logging
-from datetime import datetime
-from rich.logging import RichHandler
+import zipfile
+import threading
+import concurrent.futures
 from functools import wraps
+from datetime import datetime
+from rich.console import Console
+from rich.logging import RichHandler
+from logging.handlers import RotatingFileHandler
+
+# 创建全局线程池
+executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
 
 
 class JSONFormatter(logging.Formatter):
@@ -31,6 +39,56 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_record, ensure_ascii=False)
 
 
+class ErrorRateLimitFilter(logging.Filter):
+    def __init__(self, interval=300):
+        super().__init__()
+        self.interval = interval  # 秒
+        self.last_log_times = {}
+        self.lock = threading.Lock()
+
+    def filter(self, record):
+        if record.levelno >= logging.ERROR:
+            current_time = time.time()
+            message = record.getMessage()
+            with self.lock:
+                last_time = self.last_log_times.get(message)
+                if last_time is None or (current_time - last_time) >= self.interval:
+                    self.last_log_times[message] = current_time
+                    return True
+                else:
+                    return False
+        return True
+
+
+class AsyncCompressingRotatingFileHandler(RotatingFileHandler):
+    def doRollover(self):
+        """
+        重写 doRollover 方法，实现异步压缩备份文件。
+        :return:
+        """
+        super().doRollover()
+        for i in range(self.backupCount, 0, -1):
+            sfn = f"{self.baseFilename}.{i}"
+            if os.path.exists(sfn):
+                executor.submit(self.compress_and_remove, sfn)
+
+    @staticmethod
+    def compress_and_remove(sfn):
+        """
+        压缩备份文件并删除原文件。
+        :param sfn: 压缩文件名
+        :return:
+        """
+        zip_filename = f"{sfn}.zip"
+        try:
+            with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                zipf.write(sfn, os.path.basename(sfn))
+            os.remove(sfn)
+        except Exception as e:
+            # 使用 logging 模块记录错误
+            logging.getLogger("CompressingRotatingFileHandler").error(f"Error compressing log file {sfn}: {e}", exc_info=True)
+
+
 class RichLogger:
     _instance = None  # 单例实例
 
@@ -38,6 +96,10 @@ class RichLogger:
         if not cls._instance:
             cls._instance = super(RichLogger, cls).__new__(cls)
         return cls._instance
+
+    def __call__(self, func):
+        """使类实例可以用作装饰器"""
+        return self.log_method(func)
 
     def __init__(self, logger_name: str = "RichLogger", level: str = "INFO"):
         if hasattr(self, '_initialized') and self._initialized:
@@ -60,8 +122,16 @@ class RichLogger:
             error_log_path = os.path.join(logs_dir, f"{script_name}_error.log")
             error_json_log_path = os.path.join(logs_dir, f"{script_name}_error_json.log")
 
+            # 创建错误日志限流过滤器
+            error_rate_limit_filter = ErrorRateLimitFilter(interval=300)  # 限制 5 分钟内只记录一次错误日志
+
             # 文件处理器（INFO 及 WARNING 级别）
-            info_handler = logging.FileHandler(info_log_path, encoding='utf-8')
+            info_handler = AsyncCompressingRotatingFileHandler(
+                info_log_path,
+                maxBytes=200 * 1024 * 1024,  # 200MB
+                backupCount=7,  # 保留 7 个备份文件
+                encoding='utf-8'
+            )
             info_handler.setLevel(logging.INFO)
             # 添加过滤器，排除 ERROR 及以上级别
             info_handler.addFilter(lambda record: record.levelno < logging.ERROR)
@@ -72,8 +142,14 @@ class RichLogger:
             info_handler.setFormatter(info_formatter)
 
             # 文件处理器（ERROR 及 CRITICAL 级别）
-            error_handler = logging.FileHandler(error_log_path, encoding='utf-8')
+            error_handler = AsyncCompressingRotatingFileHandler(
+                error_log_path,
+                maxBytes=100 * 1024 * 1024,  # 100MB
+                backupCount=30,  # 保留 30 个备份文件
+                encoding='utf-8'
+            )
             error_handler.setLevel(logging.ERROR)
+            error_handler.addFilter(error_rate_limit_filter)
             error_formatter = logging.Formatter(
                 "%(asctime)s %(levelname)-8s %(message)s",
                 datefmt="[%Y/%m/%d | %H:%M:%S]"
@@ -81,13 +157,21 @@ class RichLogger:
             error_handler.setFormatter(error_formatter)
 
             # 文件处理器（ERROR 及 CRITICAL 级别，JSON 格式）
-            error_json_handler = logging.FileHandler(error_json_log_path, encoding='utf-8')
+            error_json_handler = AsyncCompressingRotatingFileHandler(
+                error_json_log_path,
+                maxBytes=100 * 1024 * 1024,  # 100MB
+                backupCount=30,  # 保留 30 个备份文件
+                encoding='utf-8'
+            )
             error_json_handler.setLevel(logging.ERROR)
+            error_json_handler.addFilter(error_rate_limit_filter)
             json_formatter = JSONFormatter()
             error_json_handler.setFormatter(json_formatter)
 
             # Rich 处理器（控制台）
-            rich_handler = RichHandler(rich_tracebacks=True)
+            terminal_width = os.get_terminal_size().columns  # 获取终端的实际宽度
+            console = Console(width=terminal_width)  # 创建 Rich 的 Console，并设置为终端的实际宽度
+            rich_handler = RichHandler(rich_tracebacks=True, console=console, markup=True)  # markup支持富文本
             rich_handler.setLevel(getattr(logging, level.upper(), logging.INFO))
             rich_formatter = logging.Formatter(
                 "{message}",
@@ -108,30 +192,19 @@ class RichLogger:
         @wraps(func)
         def wrapper(*args, **kwargs):
             func_name = func.__name__
-            # 设置 stacklevel=3 以跳过装饰器和 RichLogger 的调用帧，获取实际调用者
-            self.logger.info(f"▶️ 开始 '{func_name}'", stacklevel=3)
+            # 设置 stacklevel=2 以跳过装饰器和 RichLogger 的调用帧，获取实际调用者
+            self.logger.info(f"▶ 开始 '{func_name}'", stacklevel=2)
             start_time = time.time()
             try:
                 result = func(*args, **kwargs)
                 elapsed_time = time.time() - start_time
-                self.logger.info(f"⏹️ 结束 '{func_name}'| 耗时 {elapsed_time:.4f}s", stacklevel=3)
+                self.logger.info(f"⏹ 结束 '{func_name}'| 耗时 {elapsed_time:.4f}s", stacklevel=2)
                 return result
             except Exception as e:
-                self.logger.exception(f"Exception in '{func_name}': {e}", stacklevel=3)
+                self.logger.exception(f"❌ 出现异常 '{func_name}': {e}", stacklevel=2)
                 raise
 
         return wrapper
-
-    @staticmethod
-    def get_signature(args, kwargs):
-        """获取函数签名字符串。"""
-        args_repr = [repr(a) for a in args]
-        kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]
-        return ", ".join(args_repr + kwargs_repr)
-
-    def __call__(self, func):
-        """使类实例可以用作装饰器"""
-        return self.log_method(func)
 
     # 其他日志方法可以直接通过 self.logger 调用，并设置 stacklevel=2 以获取实际调用者
     def info(self, message):
