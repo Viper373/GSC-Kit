@@ -108,7 +108,6 @@ class RichLogger:
         @wraps(func)
         def wrapper(*args, **kwargs):
             func_name = func.__name__
-            signature = self.get_signature(args, kwargs)
             # 设置 stacklevel=3 以跳过装饰器和 RichLogger 的调用帧，获取实际调用者
             self.logger.info(f"▶️ 开始 '{func_name}'", stacklevel=3)
             start_time = time.time()
