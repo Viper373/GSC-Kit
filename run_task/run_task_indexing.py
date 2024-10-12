@@ -252,6 +252,6 @@ class RunTaskIndexing:
                 # self.download_and_save_excel(domain_str=domain_str, index=index, at_id=at_id)
                 indexing_json = self.indexing_content_to_json(domain_str, at_id, index)
                 if indexing_json:
-                    api_utils.post_gsc_data(json_data=indexing_json, json_type='indexing')
+                    api_utils.post_gsc_data(json_data=indexing_json, json_type='indexing', domain_str=domain_str)
                 else:
                     continue
