@@ -5,12 +5,22 @@
 # Description: 检查是否有 GSC cookies，有则运行 gsc_main.py，确保单实例运行
 # =============================================================================
 # shellcheck disable=SC2034
+# shellcheck disable=SC2155
+
 # ------------------------------ 配置部分 -----------------------------------
 MAIN_SCRIPT="gsc_main.py"
 CHECK_SCRIPT="checks.py"
 PROJECT_DIR="/app/product/td_gsc_bot"
 PROJECT_NAME="td_gsc_bot"
 PYTHON_CMD="python"  # 根据实际环境调整，如使用 python3 或指定虚拟环境中的 python
+
+# 获取当前日期
+CURRENT_DATE=$(date '+%Y-%m-%d')
+
+# 定义日志目录和文件
+LOG_DIR="$PROJECT_DIR/logs/$CURRENT_DATE"
+SCRIPT_NAME=$(basename "$0" .sh)
+LOG_FILE="$LOG_DIR/${SCRIPT_NAME}_sh.log"
 
 # ------------------------------ 颜色与 Emoji 定义 ---------------------------
 # 定义颜色变量
@@ -31,24 +41,42 @@ START_EMOJI="▶️"
 
 # ------------------------------ 日志函数 -----------------------------------
 log_info() {
-    echo -e "${GREEN}${INFO_EMOJI} [INFO] $(date '+%Y-%m-%d %H:%M:%S') - $1${NC}"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local console_message="${GREEN}${INFO_EMOJI} [INFO] $timestamp - $1${NC}"
+    local file_message="${INFO_EMOJI} [INFO] $timestamp - $1"
+    echo -e "$console_message"
+    echo -e "$file_message" >> "$LOG_FILE"
 }
 
 log_success() {
-    echo -e "${GREEN}${SUCCESS_EMOJI} [SUCCESS] $(date '+%Y-%m-%d %H:%M:%S') - $1${NC}"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local console_message="${GREEN}${SUCCESS_EMOJI} [SUCCESS] $timestamp - $1${NC}"
+    local file_message="${SUCCESS_EMOJI} [SUCCESS] $timestamp - $1"
+    echo -e "$console_message"
+    echo -e "$file_message" >> "$LOG_FILE"
 }
 
 log_error() {
-    echo -e "${RED}${ERROR_EMOJI} [ERROR] $(date '+%Y-%m-%d %H:%M:%S') - $1${NC}"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local console_message="${RED}${ERROR_EMOJI} [ERROR] $timestamp - $1${NC}"
+    local file_message="${ERROR_EMOJI} [ERROR] $timestamp - $1"
+    echo -e "$console_message"
+    echo -e "$file_message" >> "$LOG_FILE"
 }
 
 log_warning() {
-    echo -e "${YELLOW}${WARNING_EMOJI} [WARNING] $(date '+%Y-%m-%d %H:%M:%S') - $1${NC}"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local console_message="${YELLOW}${WARNING_EMOJI} [WARNING] $timestamp - $1${NC}"
+    local file_message="${WARNING_EMOJI} [WARNING] $timestamp - $1"
+    echo -e "$console_message"
+    echo -e "$file_message" >> "$LOG_FILE"
 }
 
 # ------------------------------ 主函数 -------------------------------------
 run_gsc_main() {
+
     log_info "开始检查 GSC cookies..."
+    log_info "脚本启动，日志将输出到 $LOG_FILE"
 
     # 切换到项目目录
     if cd "$PROJECT_DIR"; then
@@ -64,9 +92,9 @@ run_gsc_main() {
 
     # 执行检查脚本，获取结果
     CHECK_RESULT=$($PYTHON_CMD "$CHECK_SCRIPT")
-    log_info "检查cookies脚本 \"$CHECK_SCRIPT\" 执行完毕"
+    log_info "检查 cookies 脚本 \"$CHECK_SCRIPT\" 执行完毕"
     CHECK_RESULT=$(echo "$CHECK_RESULT" | tr -d '[:space:]')
-    log_info "检查cookies结果: $CHECK_RESULT"
+    log_info "检查 cookies 结果: $CHECK_RESULT"
 
     if [ "$CHECK_RESULT" = "True" ]; then
         log_info "检测到 GSC cookies，启动 \"$MAIN_SCRIPT\""
