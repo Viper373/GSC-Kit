@@ -92,10 +92,10 @@ run_gsc_main() {
 
     # 如果需要激活虚拟环境，可以在这里添加
     source /root/miniconda3/etc/profile.d/conda.sh
-    conda activate td_gsc_bot
+    conda activate $PROJECT_NAME
 
     # 运行主脚本
-    nohup $PYTHON_CMD -u "$MAIN_SCRIPT" >> /dev/null 2>&1 &
+    nohup $PYTHON_CMD -u $MAIN_SCRIPT >> /dev/null 2>&1 &
 
     log_success "已启动 \"$MAIN_SCRIPT\""
 }
