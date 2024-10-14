@@ -16,8 +16,8 @@ class APIUtils:
         self.headers = {
             'Content-Type': 'application/json',
         }
-        # self.gsc_api_base_url = 'https://aiadmin.erweima.ai/api/gsc/acceptAndParseData'
-        self.gsc_api_base_url = 'https://1004-207-2-120-14.ngrok-free.app/api/gsc/acceptAndParseData'
+        self.gsc_api_base_url = 'https://aiadmin.erweima.ai/api/gsc/acceptAndParseData'
+        # self.gsc_api_base_url = 'https://1004-207-2-120-14.ngrok-free.app/api/gsc/acceptAndParseData'
 
     @rich_logger
     def post_gsc_data(self, json_data: str, json_type: str, domain_str: str) -> bool:
