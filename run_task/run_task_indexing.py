@@ -98,7 +98,7 @@ class RunTaskIndexing:
                 rich_logger.info(f"{domain_str.split(':')[-1]} 索引列表长度: {len(index_list)}")
                 return index_list
             else:
-                rich_logger.error(f"{domain_str.split(':')[-1]} 获取索引失败: {response.status_code}")
+                rich_logger.error(f"{domain_str.split(':')[-1]} 获取索引失败: {response.status_code}丨{response.text}")
                 return []
         except Exception as e:
             rich_logger.exception(f"{domain_str.split(':')[-1]} 获取索引失败: {e}")
