@@ -20,7 +20,7 @@ class APIUtils:
         # self.gsc_api_base_url = 'https://1004-207-2-120-14.ngrok-free.app/api/gsc/acceptAndParseData'
 
     @rich_logger
-    def post_gsc_data(self, json_data: str, json_type: str, domain_str: str) -> bool:
+    def post_gsc_data(self, json_data: str, json_type: str, domain_str: str):
         """
         提供 GSC 数据。
         :param json_data: JSON 数据。
@@ -34,15 +34,10 @@ class APIUtils:
             'domain': domain_str.split(':')[-1],
         }
         try:
-            response = requests.post(url=self.gsc_api_base_url, headers=self.headers, json=json)
-            if response.status_code == 200:
-                return True
-            else:
-                rich_logger.error(f"GSC API 接口异常: {response.status_code}")
-                return False
+            response = requests.post(url=self.gsc_api_base_url, headers=self.headers, json=json, timeout=300)
+            rich_logger.info(f"GSC API Status: {response.status_code}丨{response.text}")
         except Exception as e:
             rich_logger.exception(f"GSC API 接口异常: {e}")
-            return False
 
 
 if __name__ == '__main__':
