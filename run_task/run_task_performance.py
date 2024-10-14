@@ -92,19 +92,18 @@ class RunTaskPerformance:
             'request_type': '4',
             'at': f"{at_id}",
         }
-        domain_str = domain_str.split(':')[-1]
         try:
             response = self.session.get('https://search.google.com/u/1/search-console/export/san', headers=self.headers, cookies=self.cookies, params=params)
             if response.status_code == 200:
                 excel_json = excel.sheet_content_to_json(response)
-                rich_logger.info(f"{domain_str} Excel文件转换为JSON成功")
+                rich_logger.info(f"{domain_str.split(':')[-1]} Excel文件转换为JSON成功")
                 excel_json = json.dumps(excel_json, ensure_ascii=False, cls=CustomJSONEncoder, default=str)
                 return excel_json
             else:
-                rich_logger.error(f"{domain_str} Excel文件转换为JSON失败: {response.text}")
+                rich_logger.error(f"{domain_str.split(':')[-1]} Excel文件转换为JSON失败: {response.text}")
                 return
         except Exception as e:
-            rich_logger.exception(f"{domain_str} Excel文件转换为JSON失败: {e}")
+            rich_logger.exception(f"{domain_str.split(':')[-1]} Excel文件转换为JSON失败: {e}")
             return
 
     @rich_logger
@@ -132,10 +131,8 @@ class RunTaskPerformance:
             performance_json = self.performance_content_to_json(domain_str, at_id)
             if performance_json:
                 api_utils.post_gsc_data(json_data=performance_json, json_type="performance", domain_str=domain_str)
-                domain_str = domain_str.split(':')[-1]
-                rich_logger.info(f"{domain_str} 数据已成功上传至API。")
+                rich_logger.info(f"{domain_str.split(':')[-1]} 数据已成功上传至API。")
             else:
-                domain_str = domain_str.split(':')[-1]
-                rich_logger.error(f"{domain_str} 数据上传至API失败。")
+                rich_logger.error(f"{domain_str.split(':')[-1]} 数据上传至API失败。")
                 continue
             time.sleep(2)

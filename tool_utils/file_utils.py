@@ -45,10 +45,9 @@ class ExcelManager:
         :param domain_str: 域名字符串。
         :param index: 索引字符串，作为文件名。
         """
-        domain_str = domain_str.split(':')[-1]
-        domain_dir = os.path.join(self.excel_path, domain_str)
+        domain_dir = os.path.join(self.excel_path, domain_str.split(':')[-1])
         os.makedirs(domain_dir, exist_ok=True)
-        file_path = os.path.join(self.excel_path, domain_str, f"{index}.xlsx")
+        file_path = os.path.join(self.excel_path, domain_str.split(':')[-1], f"{index}.xlsx")
         # 检查响应状态码并写入文件
         if response.status_code == 200:
             with open(file_path, 'wb') as file:
@@ -67,8 +66,7 @@ class ExcelManager:
         """
         if not excel_name:
             return
-        domain_str = domain_str.split(':')[-1]
-        domain_dir = os.path.join(self.excel_path, domain_str)
+        domain_dir = os.path.join(self.excel_path, domain_str.split(':')[-1])
         os.makedirs(domain_dir, exist_ok=True)
         file_path = os.path.join(self.excel_path, domain_dir, excel_name)
         # 检查响应状态码并写入文件
