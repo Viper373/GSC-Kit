@@ -173,7 +173,7 @@ class RichLogger:
             # 添加过滤器，排除 ERROR 及以上级别
             info_handler.addFilter(lambda record: record.levelno < logging.ERROR)
             info_formatter = CallerLogFormatter(
-                "%(asctime)s %(levelname)-8s %(message)s |%(filename)s:%(lineno)d|",
+                "%(asctime)s %(levelname)-8s %(message)s | %(filename)s:%(lineno)-4d",
                 datefmt="[%Y/%m/%d | %H:%M:%S]"
             )
             info_handler.setFormatter(info_formatter)
@@ -188,7 +188,7 @@ class RichLogger:
             error_handler.setLevel(logging.ERROR)
             error_handler.addFilter(error_rate_limit_filter)
             error_formatter = CallerLogFormatter(
-                "%(asctime)s %(levelname)-8s %(message)s |%(filename)s:%(lineno)d",
+                "%(asctime)s %(levelname)-8s %(message)s | %(filename)s:%(lineno)-4d",
                 datefmt="[%Y/%m/%d | %H:%M:%S]"
             )
             error_handler.setFormatter(error_formatter)
@@ -252,7 +252,7 @@ class RichLogger:
             try:
                 result = func(*args, **kwargs)
                 elapsed_time = time.time() - start_time
-                self.logger.info(f"⏹ 结束 '{func_name}'| 耗时 {elapsed_time:.4f}s", stacklevel=stacklevel)
+                self.logger.info(f"⏹ 结束 '{func_name}' | [耗时 {elapsed_time:.4f}s]", stacklevel=stacklevel)
                 return result
             except Exception as e:
                 self.logger.exception(f"❌ 出现异常 '{func_name}': {e}", stacklevel=stacklevel)
