@@ -14,7 +14,7 @@ rich_logger = RichLogger()
 class RedisConfig:
     def __init__(self):
         # # redis连接地址 国外
-        self.redis_connect_host = 'r-2zepo0pzaiiicdhv29pd.redis.rds.aliyuncs.com'
+        self.redis_connect_host = 'r-rj9l0g0zs12vuf60mrpd.redis.rds.aliyuncs.com'
         self.redis_connect_port = 6379
         self.redis_connect_user_pwd = 'testdaily:testdaily!1024'
 
@@ -27,8 +27,8 @@ class RedisConfig:
 class RedisUtils:
     def __init__(self):
         redis_config = RedisConfig()
-        self.redis_db_number = 0  # redis数据库编号
-        self.gsc_cookies_list_key = 'td:gsc:bot:cookies:list'  # gsc_cookies哈希
+        self.redis_db_number = 1  # redis数据库编号
+        self.gsc_cookies_list_key = 'td:gsc:bot:cookies:list'  # gsc_cookies列表键名
         # 实现一个连接池
         redis_pool = redis.ConnectionPool(
             host=redis_config.redis_connect_host,
