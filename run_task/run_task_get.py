@@ -149,11 +149,11 @@ class RunTaskGet:
             )
             if response.status_code == 200:
                 domains = string_utils.extract_domains(response.text)
-                rich_logger.info(f"域名列表长度: {len(domains)}")
+                rich_logger.info(f"该账号域名列表总数: {len(domains)}")
                 return domains
             else:
-                rich_logger.error(f"获取域名失败: {response.status_code}")
+                rich_logger.error(f"该账号获取域名失败: {response.status_code}")
                 return []
         except Exception as e:
-            rich_logger.exception(f"获取域名失败: {e}")
+            rich_logger.exception(f"该账号获取域名失败: {e}")
             return []

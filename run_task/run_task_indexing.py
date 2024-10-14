@@ -5,18 +5,20 @@
 # @Author    :Zhangjinzhao
 # @Software  :PyCharm
 import json
-
+import time
 import requests
 from run_task.run_task_get import RunTaskGet
 from tool_utils.log_utils import RichLogger
 from tool_utils.string_utils import StringUtils
 from tool_utils.file_utils import ExcelManager, CustomJSONEncoder
 from tool_utils.api_utils import APIUtils
+from tool_utils.proxy_utils import ProxyUtils
 
 rich_logger = RichLogger()
 string_utils = StringUtils()
 excel = ExcelManager()
 api_utils = APIUtils()
+proxy_utils = ProxyUtils()
 
 
 class RunTaskIndexing:
@@ -26,7 +28,9 @@ class RunTaskIndexing:
         :param cookies: 登录后的 cookies
         """
         self.get = RunTaskGet(cookies)
-        self.session = requests.Session()
+        self.session = requests.session()
+        self.proxies = proxy_utils.get_proxy()
+        self.session.proxies = self.proxies
         self.cookies = cookies
         self.index_url = 'https://search.google.com/u/{}/_/SearchConsoleAggReportUi/data/batchexecute'
         self.index_headers = {
@@ -67,6 +71,7 @@ class RunTaskIndexing:
             '_reqid': '',
             'rt': 'c',
         }
+        self.export_url = 'https://search.google.com/u/1/search-console/export/index/drilldown'
 
     def get_indexes(self, domain_str, at_id, version):
         """
@@ -81,6 +86,7 @@ class RunTaskIndexing:
             "at": f"{at_id}",
             "": ""
         }
+        domain_str = domain_str.split(':')[-1]
         formatted_index_url = self.index_url.format(version)
         try:
             response = self.session.post(
@@ -202,7 +208,7 @@ class RunTaskIndexing:
         domain_str = domain_str.split(':')[-1]
         try:
             response = self.session.get(
-                url='https://search.google.com/u/1/search-console/export/index/drilldown',
+                url=self.export_url,
                 headers=pages_excel_headers,
                 cookies=self.cookies,
                 params=pages_excel_params
@@ -212,8 +218,8 @@ class RunTaskIndexing:
                 rich_logger.info(f"{domain_str} {index} Excel文件转换为JSON成功")
                 excel_json = json.dumps(excel_json, ensure_ascii=False, cls=CustomJSONEncoder, default=str)
                 return excel_json
-            else:
-                rich_logger.error(f"{domain_str} {index} Excel文件转换为JSON失败: {response.text}")
+            elif response.status_code == 400:
+                rich_logger.error(f"{domain_str} {index} Excel文件转换为JSON失败[{response.status_code}]: {response.text}")
                 return
         except Exception as e:
             rich_logger.exception(f"{domain_str} {index} Excel文件转换为JSON失败: {e}")
@@ -249,9 +255,13 @@ class RunTaskIndexing:
 
             # 遍历每个索引并下载Excel文件
             for index in index_list:
-                # self.download_and_save_excel(domain_str=domain_str, index=index, at_id=at_id)
                 indexing_json = self.indexing_content_to_json(domain_str, at_id, index)
                 if indexing_json:
                     api_utils.post_gsc_data(json_data=indexing_json, json_type='indexing', domain_str=domain_str)
+                    domain_str = domain_str.split(':')[-1]
+                    rich_logger.info(f"{domain_str} {index} 数据已成功上传至API。")
                 else:
+                    domain_str = domain_str.split(':')[-1]
+                    rich_logger.error(f"{domain_str} {index} 数据上传至API失败。")
                     continue
+                time.sleep(2)
