@@ -10,12 +10,12 @@ import sys
 import json
 import time
 import logging
+import inspect
 import zipfile
 import threading
 import concurrent.futures
 from functools import wraps
 from datetime import datetime
-from rich.console import Console
 from rich.logging import RichHandler
 from logging.handlers import RotatingFileHandler
 
@@ -41,7 +41,33 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_record, ensure_ascii=False)
 
 
+class CallerLogFormatter(logging.Formatter):
+    """
+    自定义 Formatter，动态获取调用者的文件名和行号。
+    :return: 日志记录的格式
+    """
+
+    def format(self, record):
+        # 使用 inspect 获取调用者的文件名和行号
+        frame = inspect.currentframe()
+        try:
+            # 遍历堆栈，找到真正的调用者
+            stack = inspect.getouterframes(frame)
+            for frame_info in stack:
+                filename = os.path.basename(frame_info.filename)
+                # 排除 logging 库和当前文件
+                if 'logging' not in frame_info.filename and filename != os.path.basename(__file__):
+                    record.filename = filename
+                    record.lineno = frame_info.lineno
+                    break
+        finally:
+            del frame  # 避免循环引用
+
+        return super().format(record)
+
+
 class ErrorRateLimitFilter(logging.Filter):
+
     def __init__(self, interval=300):
         super().__init__()
         self.interval = interval  # 秒
@@ -95,12 +121,20 @@ class RichLogger:
     _instance = None  # 单例实例
 
     def __new__(cls, *args, **kwargs):
+        """
+        实现单例模式
+        :param args:
+        :param kwargs:
+        """
         if not cls._instance:
             cls._instance = super(RichLogger, cls).__new__(cls)
         return cls._instance
 
     def __call__(self, func):
-        """使类实例可以用作装饰器"""
+        """
+        使类实例可以用作装饰器
+        :param func: 被装饰的函数
+        """
         return self.log_method(func)
 
     def __init__(self, logger_name: str = "RichLogger", level: str = "INFO"):
@@ -138,8 +172,8 @@ class RichLogger:
             info_handler.setLevel(logging.INFO)
             # 添加过滤器，排除 ERROR 及以上级别
             info_handler.addFilter(lambda record: record.levelno < logging.ERROR)
-            info_formatter = logging.Formatter(
-                "%(asctime)s %(levelname)-8s %(message)s",
+            info_formatter = CallerLogFormatter(
+                "%(asctime)s %(levelname)-8s %(message)s |%(filename)s:%(lineno)d|",
                 datefmt="[%Y/%m/%d | %H:%M:%S]"
             )
             info_handler.setFormatter(info_formatter)
@@ -153,8 +187,8 @@ class RichLogger:
             )
             error_handler.setLevel(logging.ERROR)
             error_handler.addFilter(error_rate_limit_filter)
-            error_formatter = logging.Formatter(
-                "%(asctime)s %(levelname)-8s %(message)s",
+            error_formatter = CallerLogFormatter(
+                "%(asctime)s %(levelname)-8s %(message)s |%(filename)s:%(lineno)d",
                 datefmt="[%Y/%m/%d | %H:%M:%S]"
             )
             error_handler.setFormatter(error_formatter)
@@ -187,6 +221,22 @@ class RichLogger:
             self.logger.addHandler(error_json_handler)
             self.logger.addHandler(rich_handler)
 
+    @staticmethod
+    def get_stacklevel():
+        """
+        动态计算 stacklevel，以跳过装饰器和 logger 内部调用的帧。
+        """
+        stack = inspect.stack()
+        # 遍历堆栈帧，找到第一个不在当前文件和 logging 库中的帧
+        for i, frame_info in enumerate(stack):
+            filename = os.path.basename(frame_info.filename)
+            # 排除 logger 类定义的文件和 logging 库的帧
+            if 'log_utils.py' not in frame_info.filename and 'logging' not in frame_info.filename:
+                # 确保跳过装饰器和内部调用帧
+                if filename != os.path.basename(__file__):
+                    return i
+        return 3  # 默认值，如果找不到
+
     def log_method(self, func):
         """
         装饰器，用于记录函数执行的日志和耗时
@@ -195,32 +245,38 @@ class RichLogger:
         @wraps(func)
         def wrapper(*args, **kwargs):
             func_name = func.__name__
-            # 设置 stacklevel=2 以跳过装饰器和 RichLogger 的调用帧，获取实际调用者
-            self.logger.info(f"▶ 开始 '{func_name}'", stacklevel=2)
+            # 动态计算 stacklevel
+            stacklevel = self.get_stacklevel()
+            self.logger.info(f"▶ 开始 '{func_name}'", stacklevel=stacklevel)
             start_time = time.time()
             try:
                 result = func(*args, **kwargs)
                 elapsed_time = time.time() - start_time
-                self.logger.info(f"⏹ 结束 '{func_name}'| 耗时 {elapsed_time:.4f}s", stacklevel=2)
+                self.logger.info(f"⏹ 结束 '{func_name}'| 耗时 {elapsed_time:.4f}s", stacklevel=stacklevel)
                 return result
             except Exception as e:
-                self.logger.exception(f"❌ 出现异常 '{func_name}': {e}", stacklevel=2)
+                self.logger.exception(f"❌ 出现异常 '{func_name}': {e}", stacklevel=stacklevel)
                 raise
 
         return wrapper
 
-    # 其他日志方法可以直接通过 self.logger 调用，并设置 stacklevel=2 以获取实际调用者
+    # 日志记录方法
     def info(self, message):
+        stacklevel = self.get_stacklevel()
         self.logger.info(message, stacklevel=2)
 
     def debug(self, message):
+        stacklevel = self.get_stacklevel()
         self.logger.debug(message, stacklevel=2)
 
     def warning(self, message):
+        stacklevel = self.get_stacklevel()
         self.logger.warning(message, stacklevel=2)
 
     def error(self, message):
+        stacklevel = self.get_stacklevel()
         self.logger.error(message, stacklevel=2)
 
     def exception(self, message):
+        stacklevel = self.get_stacklevel()
         self.logger.exception(message, stacklevel=2)
