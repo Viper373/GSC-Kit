@@ -135,4 +135,4 @@ class RunTaskPerformance:
             else:
                 rich_logger.error(f"{domain_str.split(':')[-1]} 数据上传至API失败。")
                 continue
-            time.sleep(2)
+            time.sleep(1)
