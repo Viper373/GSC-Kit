@@ -29,8 +29,6 @@ class RunTaskIndexing:
         """
         self.get = RunTaskGet(cookies)
         self.session = requests.session()
-        self.proxies = proxy_utils.get_proxy()
-        self.session.proxies = self.proxies
         self.cookies = cookies
         self.index_url = 'https://search.google.com/u/{}/_/SearchConsoleAggReportUi/data/batchexecute'
         self.index_headers = {
