@@ -86,11 +86,10 @@ class StringUtils:
         :param domain_str: 域名字符串
         :return: 文件名字符串
         """
-        domain_str = domain_str.split(':')[-1]
         content_disposition = response.headers.get('Content-Disposition', '')
         match = re.findall('filename="(.+)"', content_disposition)
         if match:
             return match[0]
         else:
-            rich_logger.info(f"{domain_str} 未验证，无法提取 Excel 文件名")
+            rich_logger.info(f"{domain_str.split(':')[-1]} 未验证，无法提取 Excel 文件名")
             return False

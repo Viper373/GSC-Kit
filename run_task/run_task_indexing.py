@@ -86,7 +86,6 @@ class RunTaskIndexing:
             "at": f"{at_id}",
             "": ""
         }
-        domain_str = domain_str.split(':')[-1]
         formatted_index_url = self.index_url.format(version)
         try:
             response = self.session.post(
@@ -98,13 +97,13 @@ class RunTaskIndexing:
             )
             if response.status_code == 200:
                 index_list = string_utils.extract_index(response.text)
-                rich_logger.info(f"{domain_str} 索引列表长度: {len(index_list)}")
+                rich_logger.info(f"{domain_str.split(':')[-1]} 索引列表长度: {len(index_list)}")
                 return index_list
             else:
-                rich_logger.error(f"{domain_str} 获取索引失败: {response.status_code}")
+                rich_logger.error(f"{domain_str.split(':')[-1]} 获取索引失败: {response.status_code}")
                 return []
         except Exception as e:
-            rich_logger.exception(f"{domain_str} 获取索引失败: {e}")
+            rich_logger.exception(f"{domain_str.split(':')[-1]} 获取索引失败: {e}")
             return []
 
     # def download_and_save_excel(self, domain_str: str, index: str, at_id: str):
@@ -205,7 +204,6 @@ class RunTaskIndexing:
             'request_type': '4',
             'at': f'{at_id}'
         }
-        domain_str = domain_str.split(':')[-1]
         try:
             response = self.session.get(
                 url=self.export_url,
@@ -215,14 +213,14 @@ class RunTaskIndexing:
             )
             if response.status_code == 200:
                 excel_json = excel.sheet_content_to_json(response)
-                rich_logger.info(f"{domain_str} {index} Excel文件转换为JSON成功")
+                rich_logger.info(f"{domain_str.split(':')[-1]} {index} Excel文件转换为JSON成功")
                 excel_json = json.dumps(excel_json, ensure_ascii=False, cls=CustomJSONEncoder, default=str)
                 return excel_json
             elif response.status_code == 400:
-                rich_logger.error(f"{domain_str} {index} Excel文件转换为JSON失败[{response.status_code}]: {response.text}")
+                rich_logger.error(f"{domain_str.split(':')[-1]} {index} Excel文件转换为JSON失败[{response.status_code}]: {response.text}")
                 return
         except Exception as e:
-            rich_logger.exception(f"{domain_str} {index} Excel文件转换为JSON失败: {e}")
+            rich_logger.exception(f"{domain_str.split(':')[-1]} {index} Excel文件转换为JSON失败: {e}")
             return
 
     @rich_logger
@@ -258,10 +256,8 @@ class RunTaskIndexing:
                 indexing_json = self.indexing_content_to_json(domain_str, at_id, index)
                 if indexing_json:
                     api_utils.post_gsc_data(json_data=indexing_json, json_type='indexing', domain_str=domain_str)
-                    domain_str = domain_str.split(':')[-1]
-                    rich_logger.info(f"{domain_str} {index} 数据已成功上传至API。")
+                    rich_logger.info(f"{domain_str.split(':')[-1]} {index} 数据已成功上传至API。")
                 else:
-                    domain_str = domain_str.split(':')[-1]
-                    rich_logger.error(f"{domain_str} {index} 数据上传至API失败。")
+                    rich_logger.error(f"{domain_str.split(':')[-1]} {index} 数据上传至API失败。")
                     continue
                 time.sleep(2)
