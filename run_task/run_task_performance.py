@@ -61,8 +61,6 @@ class RunTaskPerformance:
             'x-same-domain': '1',
         }
         self.session = requests.session()
-        self.proxies = proxy_utils.get_proxy()
-        self.session.proxies = self.proxies
         self.cookies = cookies
 
     # def download_and_save_excel(self, domain_str: str, at_id: str):
