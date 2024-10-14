@@ -172,9 +172,7 @@ class RichLogger:
             error_json_handler.setFormatter(json_formatter)
 
             # Rich 处理器（控制台）
-            terminal_width = os.get_terminal_size().columns  # 获取终端的实际宽度
-            console = Console(width=terminal_width)  # 创建 Rich 的 Console，并设置为终端的实际宽度
-            rich_handler = RichHandler(rich_tracebacks=True, console=console, markup=True)  # markup支持富文本
+            rich_handler = RichHandler(rich_tracebacks=True, markup=True)  # markup支持富文本
             rich_handler.setLevel(getattr(logging, level.upper(), logging.INFO))
             rich_formatter = logging.Formatter(
                 "{message}",
