@@ -77,8 +77,7 @@ run_gsc_main() {
         touch "$LOG_FILE"
     fi
 
-    log_info "开始检查 GSC cookies..."
-    log_info "脚本启动，日志将输出到 $LOG_FILE"
+    log_info "开始检查 redis GSC cookies..."
 
     # 切换到项目目录
     if cd "$PROJECT_DIR"; then
