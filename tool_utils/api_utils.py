@@ -16,7 +16,8 @@ class APIUtils:
         self.headers = {
             'Content-Type': 'application/json',
         }
-        self.gsc_api_base_url = 'https://aiadmin.erweima.ai/api/gsc/acceptAndParseData'
+        # self.gsc_api_base_url = 'https://aiadmin.erweima.ai/api/gsc/acceptAndParseData'
+        self.gsc_api_base_url = 'https://1004-207-2-120-14.ngrok-free.app/api/gsc/acceptAndParseData'
 
     @rich_logger
     def post_gsc_data(self, json_data: str, json_type: str, domain_str: str) -> bool:
@@ -27,13 +28,13 @@ class APIUtils:
         :param domain_str: 域名。
         :return: bool: 是否成功提供数据。
         """
-        json_data = {
+        json = {
             'jsonData': json_data,
             'jsonType': json_type,
             'domain': domain_str,
         }
         try:
-            response = requests.post(url=self.gsc_api_base_url, headers=self.headers, json=json_data)
+            response = requests.post(url=self.gsc_api_base_url, headers=self.headers, json=json)
             if response.status_code == 200:
                 return True
             else:
@@ -42,3 +43,11 @@ class APIUtils:
         except Exception as e:
             rich_logger.exception(f"GSC API 接口异常: {e}")
             return False
+
+
+if __name__ == '__main__':
+    api_utils = APIUtils()
+    test_json = '{"test": "test"}'
+    type_test = 'indexing'
+    test_domain = 'test'
+    api_utils.post_gsc_data(test_json, type_test, test_domain)
