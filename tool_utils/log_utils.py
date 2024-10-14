@@ -263,20 +263,20 @@ class RichLogger:
     # 日志记录方法
     def info(self, message):
         stacklevel = self.get_stacklevel()
-        self.logger.info(message, stacklevel=2)
+        self.logger.info(message, stacklevel=stacklevel)
 
     def debug(self, message):
         stacklevel = self.get_stacklevel()
-        self.logger.debug(message, stacklevel=2)
+        self.logger.debug(message, stacklevel=stacklevel)
 
     def warning(self, message):
         stacklevel = self.get_stacklevel()
-        self.logger.warning(message, stacklevel=2)
+        self.logger.warning(message, stacklevel=stacklevel)
 
     def error(self, message):
         stacklevel = self.get_stacklevel()
-        self.logger.error(message, stacklevel=2)
+        self.logger.error(message, stacklevel=stacklevel)
 
     def exception(self, message):
         stacklevel = self.get_stacklevel()
-        self.logger.exception(message, stacklevel=2)
+        self.logger.exception(message, stacklevel=stacklevel)
