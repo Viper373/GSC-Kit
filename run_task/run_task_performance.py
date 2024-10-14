@@ -6,17 +6,21 @@
 # @Software  :PyCharm
 
 import json
+import time
+
 import requests
 from run_task.run_task_get import RunTaskGet
 from tool_utils.log_utils import RichLogger
 from tool_utils.string_utils import StringUtils
 from tool_utils.file_utils import ExcelManager, CustomJSONEncoder
 from tool_utils.api_utils import APIUtils
+from tool_utils.proxy_utils import ProxyUtils
 
 rich_logger = RichLogger()
 string_utils = StringUtils()
 excel = ExcelManager()
 api_utils = APIUtils()
+proxy_utils = ProxyUtils()
 
 
 class RunTaskPerformance:
@@ -26,7 +30,6 @@ class RunTaskPerformance:
         :param cookies: 请求头中的 Cookies。
         """
         self.get = RunTaskGet(cookies)
-        self.session = requests.Session()
         self.headers = {
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
             'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6,ja;q=0.5,ko;q=0.4,fr;q=0.3',
@@ -57,6 +60,9 @@ class RunTaskPerformance:
             'x-client-data': 'CKe1yQEIkrbJAQiitskBCKmdygEIoYPLAQiWocsBCPKiywEIm/7MAQiFoM0BCKyezgEI/qXOAQi/ts4BCKK7zgEI2sLOAQjKxM4BCL7HzgEIp8jOAQivyM4BGPbJzQEYnLHOAQ==',
             'x-same-domain': '1',
         }
+        self.session = requests.session()
+        self.proxies = proxy_utils.get_proxy()
+        self.session.proxies = self.proxies
         self.cookies = cookies
 
     # def download_and_save_excel(self, domain_str: str, at_id: str):
@@ -126,5 +132,10 @@ class RunTaskPerformance:
             performance_json = self.performance_content_to_json(domain_str, at_id)
             if performance_json:
                 api_utils.post_gsc_data(json_data=performance_json, json_type="performance", domain_str=domain_str)
+                domain_str = domain_str.split(':')[-1]
+                rich_logger.info(f"{domain_str} 数据已成功上传至API。")
             else:
+                domain_str = domain_str.split(':')[-1]
+                rich_logger.error(f"{domain_str} 数据上传至API失败。")
                 continue
+            time.sleep(2)

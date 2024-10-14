@@ -28,6 +28,7 @@ class APIUtils:
         :param domain_str: 域名。
         :return: bool: 是否成功提供数据。
         """
+        domain_str = domain_str.split(':')[-1]
         json = {
             'jsonData': json_data,
             'jsonType': json_type,
