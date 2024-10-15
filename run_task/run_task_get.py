@@ -116,7 +116,7 @@ class RunTaskGet:
                 rich_logger.info(f"gsc_version: {version}")
                 # 构建新的URL并发送GET请求
                 new_url = self.base_url.format(version)
-                response = self.session.get(url=new_url, headers=self.headers, cookies=self.cookies, params=self.params, allow_redirects=False)
+                response = self.session.get(url=new_url, headers=self.headers, cookies=self.cookies, allow_redirects=True)
                 at_id = string_utils.extract_at_id(response.text)
                 rich_logger.info(f"at_id: {at_id}")
                 return version, at_id
