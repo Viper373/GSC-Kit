@@ -7,9 +7,9 @@
 
 import re
 import codecs
-from typing import Any
-
+import hashlib
 import requests
+from typing import Any
 from urllib.parse import urlparse
 from tool_utils.log_utils import RichLogger
 
@@ -93,3 +93,9 @@ class StringUtils:
         else:
             rich_logger.info(f"{domain_str.split(':')[-1]} 未验证，无法提取 Excel 文件名")
             return False
+
+    @staticmethod
+    def md5_encode(str_data):
+        md5_value = hashlib.md5()
+        md5_value.update(str_data.encode('utf-8'))
+        return md5_value.hexdigest()
