@@ -6,6 +6,7 @@
 # @Software  :PyCharm
 
 import re
+import json
 import codecs
 import hashlib
 import requests
@@ -95,7 +96,25 @@ class StringUtils:
             return False
 
     @staticmethod
-    def md5_encode(str_data):
+    def md5_encode(str_data: str) -> str:
+        """
+        对字符串进行MD5加密。
+        :param str_data: 需要加密的字符串
+        :return: 加密后的字符串
+        """
         md5_value = hashlib.md5()
         md5_value.update(str_data.encode('utf-8'))
         return md5_value.hexdigest()
+
+    @staticmethod
+    def extract_indexing_reason(indexing_json: str) -> str:
+        """
+        提取索引原因。
+        :param indexing_json: 索引JSON数据
+        :return: 索引原因字符串
+        """
+        indexing_json = json.loads(indexing_json)
+        for item in indexing_json.get("Metadata", []):
+            if item.get("Property") == "Issue":
+                return item.get("Value")
+        return "未找到索引原因"
