@@ -253,6 +253,11 @@ class RunTaskIndexing:
             for index in index_list:
                 indexing_json = self.indexing_content_to_json(domain_str, at_id, index)
                 if indexing_json:
+                    reason = string_utils.extract_indexing_reason(indexing_json=indexing_json)
+                    recent_date = api_utils.get_recent_time(gscType=reason, projectSource=domain_str.split(":")[-1])
+                    # 处理逻辑
+                    indexing_json = string_utils.filter_chart_data(json_str=indexing_json, recent_date=recent_date)
+                    # 上传API
                     api_utils.post_gsc_data(json_data=indexing_json, json_type='indexing', domain_str=domain_str)
                     rich_logger.info(f"{domain_str.split(':')[-1]} {index} 数据已成功上传至API。")
                 else:
