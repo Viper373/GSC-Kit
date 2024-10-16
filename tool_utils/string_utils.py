@@ -141,3 +141,25 @@ class StringUtils:
         data["Chart"] = filtered_chart
         # 返回过滤后的 JSON 数据
         return json.dumps(data, ensure_ascii=False, indent=2)
+
+    @staticmethod
+    def set_null_excel_sheet(indexing_json: str, sheet_name: str):
+        """
+        将传入的 JSON 字符串中名为 sheet_name 的字段值置为 None。
+        :param indexing_json: 传入的 JSON 字符串。
+        :param sheet_name: 要删除的字段名称。
+        :return: 删除指定工作表后的 JSON 数据。
+        """
+        # 将 JSON 字符串转换为字典
+        try:
+            data = json.loads(indexing_json)
+        except json.JSONDecodeError as e:
+            return f"JSON 格式错误: {e}"
+        # 检查是否存在指定的 sheet_name 字段
+        if sheet_name in data:
+            # 将该字段的值置为 None
+            data[sheet_name] = None
+        else:
+            return f"字段 {sheet_name} 不存在于 JSON 中"
+        # 将修改后的字典转换回 JSON 字符串
+        return json.dumps(data, ensure_ascii=False, indent=4)
