@@ -22,4 +22,4 @@ if __name__ == '__main__':
             run_task_performance = RunTaskPerformance(cookies)
             # run_task_performance.run_performance()
             run_task_indexing.run_indexing()
-        time.sleep(1)
+        time.sleep(60)
