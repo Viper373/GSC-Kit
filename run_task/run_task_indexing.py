@@ -215,7 +215,8 @@ class RunTaskIndexing:
                 excel_json = json.dumps(excel_json, ensure_ascii=False, cls=CustomJSONEncoder, default=str)
                 return excel_json
             elif response.status_code == 400:
-                rich_logger.error(f"{domain_str.split(':')[-1]} {index} Excel文件转换为JSON失败[{response.status_code}]: {response.text}")
+                rich_logger.error(
+                    f"{domain_str.split(':')[-1]} {index} Excel文件转换为JSON失败[{response.status_code}]: {response.text}")
                 return
         except Exception as e:
             rich_logger.exception(f"{domain_str.split(':')[-1]} {index} Excel文件转换为JSON失败: {e}")
@@ -226,6 +227,9 @@ class RunTaskIndexing:
         """
         执行整个GSC-Indexing爬取流程。
         """
+
+        rich_logger.logger.info(f'开始执行任务，获取到cookie:{self.cookies}')
+
         # 获取版本和at_id
         version, at_id = self.get.get_gsc_version_and_at_id()
 
