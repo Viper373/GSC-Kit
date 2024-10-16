@@ -4,7 +4,6 @@
 # @Time      :2024/10/12 10:34
 # @Author    :Zhangjinzhao
 # @Software  :PyCharm
-from http.client import responses
 
 import requests
 from tool_utils.log_utils import RichLogger
@@ -73,4 +72,4 @@ if __name__ == '__main__':
     gscType = 'Not found (404)'
     projectSource = 'aicoloringpages.net'
     date = api_utils.get_recent_time(gscType=gscType, projectSource=projectSource)
-    print(date)
+    print(type(date))
