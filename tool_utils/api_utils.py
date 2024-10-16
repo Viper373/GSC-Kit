@@ -16,8 +16,9 @@ class APIUtils:
         self.headers = {
             'Content-Type': 'application/json',
         }
-        self.gsc_api_base_url = 'https://aiadmin.erweima.ai/api/gsc/acceptAndParseData'
-        # self.gsc_api_base_url = 'https://1004-207-2-120-14.ngrok-free.app/api/gsc/acceptAndParseData'
+        # self.gsc_api_base_url = 'https://aiadmin.erweima.ai/api/gsc/acceptAndParseData'
+        self.gsc_api_base_url = 'https://258b-103-134-34-68.ngrok-free.app/api/gsc/acceptAndParseData'
+        # self.gsc_time_url = 'https://aiadmin.erweima.ai/api/gsc/getDBMaxGscDate'
         self.gsc_time_url = 'https://258b-103-134-34-68.ngrok-free.app/api/gsc/getDBMaxGscDate'
 
     @rich_logger
@@ -58,11 +59,12 @@ class APIUtils:
             if response.status_code == 200:
                 if response.json()['code'] == 200:
                     recent_date = response.json()['data']
+                    rich_logger.info(f"GSC Recent Date: {recent_date}")
                     return recent_date
                 else:
-                    return None
+                    rich_logger.exception(f"GSC Time API 接口异常: {response.json()['message']}")
             else:
-                return None
+                rich_logger.exception(f"GSC Time API 接口异常: {response.text}")
         except Exception as e:
             rich_logger.exception(f"GSC Time API 接口异常: {e}")
 
