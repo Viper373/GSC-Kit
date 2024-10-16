@@ -32,6 +32,21 @@ class StringUtils:
         return md5_value.hexdigest()
 
     @staticmethod
+    def compress_json(json_str: str) -> str:
+        """
+        将 JSON 字符串压缩成一行。
+        :param json_str: 原始的 JSON 字符串。
+        :return: 压缩后的单行 JSON 字符串。
+        """
+        try:
+            data = json.loads(json_str)
+        except json.JSONDecodeError as e:
+            return f"JSON 格式错误: {e}"
+        # 压缩 JSON，确保输出是一行
+        compressed_json = json.dumps(data, separators=(',', ':'))
+        return compressed_json
+
+    @staticmethod
     def extract_gsc_version(url: str) -> str:
         """
         从URL中提取GSC版本号。
