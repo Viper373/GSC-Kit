@@ -173,7 +173,7 @@ class RichLogger:
             # 添加过滤器，排除 ERROR 及以上级别
             info_handler.addFilter(lambda record: record.levelno < logging.ERROR)
             info_formatter = CallerLogFormatter(
-                "%(asctime)s %(levelname)-8s %(message)s | %(filename)s:%(lineno)-4d",
+                "%(asctime)s %(levelname)-8s | %(filename)s:%(lineno)-4d | %(message)s",
                 datefmt="[%Y/%m/%d | %H:%M:%S]"
             )
             info_handler.setFormatter(info_formatter)
@@ -188,7 +188,7 @@ class RichLogger:
             error_handler.setLevel(logging.ERROR)
             error_handler.addFilter(error_rate_limit_filter)
             error_formatter = CallerLogFormatter(
-                "%(asctime)s %(levelname)-8s %(message)s | %(filename)s:%(lineno)-4d",
+                "%(asctime)s %(levelname)-8s | %(filename)s:%(lineno)-4d | %(message)s",
                 datefmt="[%Y/%m/%d | %H:%M:%S]"
             )
             error_handler.setFormatter(error_formatter)
