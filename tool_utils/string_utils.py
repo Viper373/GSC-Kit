@@ -150,7 +150,7 @@ class StringUtils:
         # 过滤 Chart 字段
         filtered_chart = [
             entry for entry in data.get("Chart", [])
-            if datetime.strptime(entry["Date"], "%Y-%m-%d") >= recent_date
+            if datetime.strptime(entry["Date"], "%Y-%m-%d") > recent_date
         ]
         # 更新原数据中的 Chart 字段
         data["Chart"] = filtered_chart
