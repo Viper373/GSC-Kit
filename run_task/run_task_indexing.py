@@ -263,6 +263,7 @@ class RunTaskIndexing:
                         # 处理逻辑
                         indexing_json = string_utils.filter_chart_data(json_str=indexing_json, recent_date=recent_date)
                     # 上传API
+                    string_utils.set_null_excel_sheet(indexing_json=indexing_json, sheet_name='Table')
                     api_utils.post_gsc_data(json_data=indexing_json, json_type='indexing', domain_str=domain_str)
                     rich_logger.info(f"{domain_str.split(':')[-1]} {index} 数据已成功上传至API。")
                 else:
