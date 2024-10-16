@@ -18,7 +18,7 @@ class APIUtils:
         }
         self.gsc_api_base_url = 'https://aiadmin.erweima.ai/api/gsc/acceptAndParseData'
         # self.gsc_api_base_url = 'https://1004-207-2-120-14.ngrok-free.app/api/gsc/acceptAndParseData'
-        self.gsc_time_url = 'https://d8a4-103-134-34-68.ngrok-free.app/api/gsc/getDBMaxGscDate'
+        self.gsc_time_url = 'https://258b-103-134-34-68.ngrok-free.app/api/gsc/getDBMaxGscDate'
 
     @rich_logger
     def post_gsc_data(self, json_data: str, json_type: str, domain_str: str):
@@ -69,7 +69,7 @@ class APIUtils:
 
 if __name__ == '__main__':
     api_utils = APIUtils()
-    gscType = 'Not found (404)'
-    projectSource = 'aicoloringpages.net'
-    date = api_utils.get_recent_time(gscType=gscType, projectSource=projectSource)
-    print(type(date))
+    # gscType = 'Not found (404)'
+    # projectSource = 'aicoloringpages.net'
+    # date = api_utils.get_recent_time(gscType=gscType, projectSource=projectSource)
+    # print(type(date))
