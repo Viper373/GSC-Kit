@@ -119,6 +119,7 @@ class AsyncCompressingRotatingFileHandler(RotatingFileHandler):
 
 class RichLogger:
     _instance = None  # 单例实例
+    _lock = threading.Lock()  # 用于线程安全的锁
 
     def __new__(cls, *args, **kwargs):
         """
@@ -146,80 +147,110 @@ class RichLogger:
         self.logger.setLevel(getattr(logging, level.upper(), logging.INFO))
         self.logger.propagate = False  # 防止日志重复
 
-        if not self.logger.handlers:
-            # 创建日志目录
-            current_date = datetime.now().strftime("%Y-%m-%d")  # 格式：YYYY-MM-DD
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            logs_dir = os.path.join(project_root, "logs", current_date)
-            os.makedirs(logs_dir, exist_ok=True)
+        self.current_date = datetime.now().strftime("%Y-%m-%d")
+        self.project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.logs_dir = os.path.join(self.project_root, "logs", self.current_date)
+        os.makedirs(self.logs_dir, exist_ok=True)
 
-            script_name = os.path.splitext(os.path.basename(sys.argv[0]))[0]
-            info_log_path = os.path.join(logs_dir, f"{script_name}_info.log")
-            error_log_path = os.path.join(logs_dir, f"{script_name}_error.log")
-            error_json_log_path = os.path.join(logs_dir, f"{script_name}_error_json.log")
+        self.script_name = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 
-            # 创建错误日志限流过滤器
-            error_rate_limit_filter = ErrorRateLimitFilter(interval=300)  # error.log 的过滤器实例
-            error_json_rate_limit_filter = ErrorRateLimitFilter(interval=300)  # error_json.log 的过滤器实例
+        # 初始化处理器
+        self.initialize_handlers()
 
-            # 文件处理器（INFO 及 WARNING 级别）
-            info_handler = AsyncCompressingRotatingFileHandler(
-                info_log_path,
-                maxBytes=200 * 1024 * 1024,  # 200MB
-                backupCount=7,  # 保留 7 个备份文件
-                encoding='utf-8'
-            )
-            info_handler.setLevel(logging.INFO)
-            # 添加过滤器，排除 ERROR 及以上级别
-            info_handler.addFilter(lambda record: record.levelno < logging.ERROR)
-            info_formatter = CallerLogFormatter(
-                "%(asctime)s %(levelname)-8s | %(filename)-30s:%(lineno)-4d | %(message)s",
-                datefmt="[%Y/%m/%d | %H:%M:%S]"
-            )
-            info_handler.setFormatter(info_formatter)
+        # 启动后台线程监控日期变化
+        self.monitor_thread = threading.Thread(target=self.monitor_date_change, daemon=True)
+        self.monitor_thread.start()
 
-            # 文件处理器（ERROR 及 CRITICAL 级别）
-            error_handler = AsyncCompressingRotatingFileHandler(
-                error_log_path,
-                maxBytes=100 * 1024 * 1024,  # 100MB
-                backupCount=30,  # 保留 30 个备份文件
-                encoding='utf-8'
-            )
-            error_handler.setLevel(logging.ERROR)
-            error_handler.addFilter(error_rate_limit_filter)
-            error_formatter = CallerLogFormatter(
-                "%(asctime)s %(levelname)-8s | %(filename)-30s:%(lineno)-4d | %(message)s",
-                datefmt="[%Y/%m/%d | %H:%M:%S]"
-            )
-            error_handler.setFormatter(error_formatter)
+    def initialize_handlers(self):
+        """
+        初始化日志处理器
+        """
+        # 移除现有的处理器（如果有）
+        if self.logger.hasHandlers():
+            self.logger.handlers.clear()
 
-            # 文件处理器（ERROR 及 CRITICAL 级别，JSON 格式）
-            error_json_handler = AsyncCompressingRotatingFileHandler(
-                error_json_log_path,
-                maxBytes=100 * 1024 * 1024,  # 100MB
-                backupCount=30,  # 保留 30 个备份文件
-                encoding='utf-8'
-            )
-            error_json_handler.setLevel(logging.ERROR)
-            error_json_handler.addFilter(error_json_rate_limit_filter)
-            json_formatter = JSONFormatter()
-            error_json_handler.setFormatter(json_formatter)
+        # 创建日志目录
+        os.makedirs(self.logs_dir, exist_ok=True)
 
-            # Rich 处理器（控制台）
-            rich_handler = RichHandler(rich_tracebacks=True, markup=True)  # markup支持富文本
-            rich_handler.setLevel(getattr(logging, level.upper(), logging.INFO))
-            rich_formatter = logging.Formatter(
-                "{message}",
-                style="{",
-                datefmt="[%Y/%m/%d | %H:%M:%S]"
-            )
-            rich_handler.setFormatter(rich_formatter)
+        info_log_path = os.path.join(self.logs_dir, f"{self.script_name}_info.log")
+        error_log_path = os.path.join(self.logs_dir, f"{self.script_name}_error.log")
+        error_json_log_path = os.path.join(self.logs_dir, f"{self.script_name}_error_json.log")
 
-            # 添加处理器到日志器
-            self.logger.addHandler(info_handler)
-            self.logger.addHandler(error_handler)
-            self.logger.addHandler(error_json_handler)
-            self.logger.addHandler(rich_handler)
+        # 创建错误日志限流过滤器
+        error_rate_limit_filter = ErrorRateLimitFilter(interval=300)  # error.log 的过滤器实例
+        error_json_rate_limit_filter = ErrorRateLimitFilter(interval=300)  # error_json.log 的过滤器实例
+
+        # 文件处理器（INFO 及 WARNING 级别）
+        info_handler = AsyncCompressingRotatingFileHandler(
+            info_log_path,
+            maxBytes=200 * 1024 * 1024,  # 200MB
+            backupCount=7,  # 保留 7 个备份文件
+            encoding='utf-8'
+        )
+        info_handler.setLevel(logging.INFO)
+        # 添加过滤器，排除 ERROR 及以上级别
+        info_handler.addFilter(lambda record: record.levelno < logging.ERROR)
+        info_formatter = CallerLogFormatter(
+            "%(asctime)s %(levelname)-8s | %(filename)-30s:%(lineno)-4d | %(message)s",
+            datefmt="[%Y/%m/%d | %H:%M:%S]"
+        )
+        info_handler.setFormatter(info_formatter)
+
+        # 文件处理器（ERROR 及 CRITICAL 级别）
+        error_handler = AsyncCompressingRotatingFileHandler(
+            error_log_path,
+            maxBytes=100 * 1024 * 1024,  # 100MB
+            backupCount=30,  # 保留 30 个备份文件
+            encoding='utf-8'
+        )
+        error_handler.setLevel(logging.ERROR)
+        error_handler.addFilter(error_rate_limit_filter)
+        error_formatter = CallerLogFormatter(
+            "%(asctime)s %(levelname)-8s | %(filename)-30s:%(lineno)-4d | %(message)s",
+            datefmt="[%Y/%m/%d | %H:%M:%S]"
+        )
+        error_handler.setFormatter(error_formatter)
+
+        # 文件处理器（ERROR 及 CRITICAL 级别，JSON 格式）
+        error_json_handler = AsyncCompressingRotatingFileHandler(
+            error_json_log_path,
+            maxBytes=100 * 1024 * 1024,  # 100MB
+            backupCount=30,  # 保留 30 个备份文件
+            encoding='utf-8'
+        )
+        error_json_handler.setLevel(logging.ERROR)
+        error_json_handler.addFilter(error_json_rate_limit_filter)
+        json_formatter = JSONFormatter()
+        error_json_handler.setFormatter(json_formatter)
+
+        # Rich 处理器（控制台）
+        rich_handler = RichHandler(rich_tracebacks=True, markup=True)  # markup支持富文本
+        rich_handler.setLevel(getattr(logging, "INFO", logging.INFO))
+        rich_formatter = logging.Formatter(
+            "{message}",
+            style="{",
+            datefmt="[%Y/%m/%d | %H:%M:%S]"
+        )
+        rich_handler.setFormatter(rich_formatter)
+
+        # 添加处理器到日志器
+        self.logger.addHandler(info_handler)
+        self.logger.addHandler(error_handler)
+        self.logger.addHandler(error_json_handler)
+        self.logger.addHandler(rich_handler)
+
+    def monitor_date_change(self):
+        """
+        后台线程监控日期变化，更新日志处理器
+        """
+        while True:
+            time.sleep(60)  # 每分钟检查一次
+            new_date = datetime.now().strftime("%Y-%m-%d")
+            if new_date != self.current_date:
+                with self._lock:
+                    self.current_date = new_date
+                    self.logs_dir = os.path.join(self.project_root, "logs", self.current_date)
+                    self.initialize_handlers()
 
     @staticmethod
     def get_stacklevel():
