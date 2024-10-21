@@ -6,10 +6,12 @@
 # @Software  :PyCharm
 
 import re
+import json
 import codecs
 import hashlib
 import requests
 from typing import Any
+from datetime import datetime
 from urllib.parse import urlparse
 from tool_utils.log_utils import RichLogger
 
@@ -17,6 +19,33 @@ rich_logger = RichLogger()
 
 
 class StringUtils:
+
+    @staticmethod
+    def md5_encode(str_data: str) -> str:
+        """
+        对字符串进行MD5加密。
+        :param str_data: 需要加密的字符串
+        :return: 加密后的字符串
+        """
+        md5_value = hashlib.md5()
+        md5_value.update(str_data.encode('utf-8'))
+        return md5_value.hexdigest()
+
+    @staticmethod
+    def compress_json(json_str: str) -> str:
+        """
+        将 JSON 字符串压缩成一行。
+        :param json_str: 原始的 JSON 字符串。
+        :return: 压缩后的单行 JSON 字符串。
+        """
+        try:
+            data = json.loads(json_str)
+        except json.JSONDecodeError as e:
+            return f"JSON 格式错误: {e}"
+        # 压缩 JSON，确保输出是一行
+        compressed_json = json.dumps(data, separators=(',', ':'))
+        return compressed_json
+
     @staticmethod
     def extract_gsc_version(url: str) -> str:
         """
@@ -95,7 +124,57 @@ class StringUtils:
             return False
 
     @staticmethod
-    def md5_encode(str_data):
-        md5_value = hashlib.md5()
-        md5_value.update(str_data.encode('utf-8'))
-        return md5_value.hexdigest()
+    def extract_indexing_reason(indexing_json: str) -> str:
+        """
+        提取索引原因。
+        :param indexing_json: 索引JSON数据
+        :return: 索引原因字符串
+        """
+        indexing_json = json.loads(indexing_json)
+        for item in indexing_json.get("Metadata", []):
+            if item.get("Property") == "Issue":
+                return item.get("Value")
+        return "未找到索引原因"
+
+    @staticmethod
+    def filter_chart_data(json_str: str, recent_date: str):
+        """
+        过滤 JSON 数据中的 Chart 字段，只保留日期大于等于 recent_date 的项。
+
+        :param json_str: 传入的 JSON 字符串。
+        :param recent_date: 最近日期，格式为 "YYYY-MM-DD"。
+        :return: 过滤后的 JSON 数据。
+        """
+        data = json.loads(json_str)
+        recent_date = datetime.strptime(recent_date, "%Y-%m-%d")
+        # 过滤 Chart 字段
+        filtered_chart = [
+            entry for entry in data.get("Chart", [])
+            if datetime.strptime(entry["Date"], "%Y-%m-%d") > recent_date
+        ]
+        # 更新原数据中的 Chart 字段
+        data["Chart"] = filtered_chart
+        # 返回过滤后的 JSON 数据
+        return json.dumps(data, ensure_ascii=False, indent=2)
+
+    @staticmethod
+    def set_null_excel_sheet(indexing_json: str, sheet_name: str):
+        """
+        将传入的 JSON 字符串中名为 sheet_name 的字段值置为 None。
+        :param indexing_json: 传入的 JSON 字符串。
+        :param sheet_name: 要删除的字段名称。
+        :return: 删除指定工作表后的 JSON 数据。
+        """
+        # 将 JSON 字符串转换为字典
+        try:
+            data = json.loads(indexing_json)
+        except json.JSONDecodeError as e:
+            return f"JSON 格式错误: {e}"
+        # 检查是否存在指定的 sheet_name 字段
+        if sheet_name in data:
+            # 将该字段的值置为 None
+            data[sheet_name] = None
+        else:
+            return f"字段 {sheet_name} 不存在于 JSON 中"
+        # 将修改后的字典转换回 JSON 字符串
+        return json.dumps(data, ensure_ascii=False, indent=4)

@@ -215,7 +215,8 @@ class RunTaskIndexing:
                 excel_json = json.dumps(excel_json, ensure_ascii=False, cls=CustomJSONEncoder, default=str)
                 return excel_json
             elif response.status_code == 400:
-                rich_logger.error(f"{domain_str.split(':')[-1]} {index} Excel文件转换为JSON失败[{response.status_code}]: {response.text}")
+                rich_logger.error(
+                    f"{domain_str.split(':')[-1]} {index} Excel文件转换为JSON失败[{response.status_code}]: {response.text}")
                 return
         except Exception as e:
             rich_logger.exception(f"{domain_str.split(':')[-1]} {index} Excel文件转换为JSON失败: {e}")
@@ -226,6 +227,9 @@ class RunTaskIndexing:
         """
         执行整个GSC-Indexing爬取流程。
         """
+
+        rich_logger.logger.info(f'开始执行任务，获取到cookie:{self.cookies}')
+
         # 获取版本和at_id
         version, at_id = self.get.get_gsc_version_and_at_id()
 
@@ -253,6 +257,14 @@ class RunTaskIndexing:
             for index in index_list:
                 indexing_json = self.indexing_content_to_json(domain_str, at_id, index)
                 if indexing_json:
+                    reason = string_utils.extract_indexing_reason(indexing_json=indexing_json)
+                    recent_date = api_utils.get_recent_time(gscType=reason, projectSource=domain_str.split(":")[-1])
+                    if recent_date is not None:
+                        # 处理逻辑
+                        indexing_json = string_utils.filter_chart_data(json_str=indexing_json, recent_date=recent_date)
+                    # 上传API
+                    indexing_json = string_utils.set_null_excel_sheet(indexing_json=indexing_json, sheet_name='Table')
+                    indexing_json = string_utils.compress_json(json_str=indexing_json)
                     api_utils.post_gsc_data(json_data=indexing_json, json_type='indexing', domain_str=domain_str)
                     rich_logger.info(f"{domain_str.split(':')[-1]} {index} 数据已成功上传至API。")
                 else:

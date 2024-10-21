@@ -91,13 +91,13 @@ class RunTaskGet:
         self.domains_params = {
             'rpcids': 'BWF8he',
             'source-path': '/u/2/search-console/index',
-            'f.sid': '371691613736909429',
-            'bl': 'boq_searchconsoleserver_20241009.02_p0',
+            'f.sid': '',
+            'bl': '',
             'hl': 'en',
             'soc-app': '1',
             'soc-platform': '1',
             'soc-device': '1',
-            '_reqid': '1068404',
+            '_reqid': '1068405',
             'rt': 'c',
         }
 
@@ -116,7 +116,7 @@ class RunTaskGet:
                 rich_logger.info(f"gsc_version: {version}")
                 # 构建新的URL并发送GET请求
                 new_url = self.base_url.format(version)
-                response = self.session.get(url=new_url, headers=self.headers, cookies=self.cookies, params=self.params, allow_redirects=False)
+                response = self.session.get(url=new_url, headers=self.headers, cookies=self.cookies, allow_redirects=True)
                 at_id = string_utils.extract_at_id(response.text)
                 rich_logger.info(f"at_id: {at_id}")
                 return version, at_id
@@ -149,7 +149,7 @@ class RunTaskGet:
             )
             if response.status_code == 200:
                 domains = string_utils.extract_domains(response.text)
-                rich_logger.info(f"该账号域名列表总数: {len(domains)}")
+                rich_logger.info(f"该账号域名列表总数: {len(domains)} {domains}")
                 return domains
             else:
                 rich_logger.error(f"该账号获取域名失败: {response.status_code}")
