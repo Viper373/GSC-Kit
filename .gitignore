@@ -164,3 +164,4 @@ cython_debug/
 excel/
 logs/
 tool_utils/test.py
+/GSC-Kit1.0/
